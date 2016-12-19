@@ -1,9 +1,24 @@
 const Discordie = require('discordie')
+const UserVoice = require('uservoice-nodejs')
 const bot = new Discordie({autoReconnect: true})
 const Events = Discordie.Events
 const Config = require('./config.js')
 const Commands = require('./Utils/command_engine').Commands
 const AccessChecker = require('./Utils/access_checker')
+
+// UserVoice API V2 Variables
+var v2Client = new UserVoice.ClientV2({
+  clientId: Config.uservoice.key,
+  subdomain: Config.uservoice.subdomain
+})
+
+// UserVoice API V1 Variables
+var uvClient = new UserVoice.Client({
+  subdomain: Config.uservoice.subdomain.trim(),
+  domain: Config.uservoice.domain.trim(),
+  apiKey: Config.uservoice.key.trim(),
+  apiSecret: Config.uservoice.secret.trim()
+})
 
 // Discord bot stuffs
 bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
@@ -24,7 +39,7 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
           return
         }
         try {
-          Commands[cmd].fn(bot, msg, bot, suffix)
+          Commands[cmd].fn(bot, msg, suffix, UserVoice, uvClient, Config)
         } catch (e) {
           console.error(e)
           msg.reply('an error occured while proccessing this command, the admins have been alerted, please try again later')
