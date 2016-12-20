@@ -8,6 +8,8 @@ let Config = {
     }
   },
   uservoice: {
+    subdomain: 'feedback', // UserVoice subdomain
+    domain: 'discordapp.com', // UserVoice domain
     key: 'loldiscord', // UserVoice API key
     secret: 'loldiscord', // UserVoice API secret
     trusted: true, // Is the key trusted by UserVoice?
