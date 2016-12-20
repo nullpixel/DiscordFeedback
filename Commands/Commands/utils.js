@@ -29,20 +29,24 @@ commands['shutdown'] = {
   modOnly: false,
   fn: function (client, message, suffix) {
     message.reply('Okay, shutting down.')
+
     console.log('I was shutdown! I would give a talking to', message.author.username, ', I think they were the one who shut me down.')
     client.disconnect()
   }
 }
 
-commands['uservoice'] = {
+commands['uv'] = {
   adminOnly: true,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     uvClient.loginAsOwner()
 
-    uvClient.get('tickets.json')
-      .then(function (tickets) {
-        message.reply('Ok, Here is all the tickets \'\'\'', tickets, ' \'\'\'')
+    uvClient.get(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
+      .then(function (suggestions) {
+        var suggest = JSON.stringify(suggestions)
+        //message.channel.sendMessage('Ok, Here is all the comments: \n```json\n', suggest, '\n```')
+        message.channel.sendMessage(['Ok, Here are all suggestions:\n```json\n' + suggest.trim() + '\n```'])
+        //console.log(suggest)
       })
       .catch(function (error) {
         // error handling

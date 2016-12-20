@@ -24,7 +24,7 @@ var uvClient = new UserVoice.Client({
 
 // Discord bot stuffs
 bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
-  if (c.message.content.indexOf(Config.prefix) === 0 || c.message.content.indexOf(bot.User.mention) === 0) {
+  if (c.message.content.indexOf(Config.discord.prefix) === 0 || c.message.content.indexOf(bot.User.mention, ' ') === 0) {
     var cmd = c.message.content.substr(Config.discord.prefix.length).split(' ')[0].toLowerCase()
     var suffix
     suffix = c.message.content.substr(Config.discord.prefix.length).split(' ')
