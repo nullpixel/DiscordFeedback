@@ -9,18 +9,20 @@ const bot = new Discordie({
 })
 
 // UserVoice API V2 Variables
-var v2Client = new UserVoice.ClientV2({
+var v2ClientNew = new UserVoice.ClientV2({
   clientId: Config.uservoice.key,
   subdomain: Config.uservoice.subdomain
 })
 
 // UserVoice API V1 Variables
-var uvClient = new UserVoice.Client({
+var uvClientNew = new UserVoice.Client({
   subdomain: Config.uservoice.subdomain.trim(),
   domain: Config.uservoice.domain.trim(),
   apiKey: Config.uservoice.key.trim(),
   apiSecret: Config.uservoice.secret.trim()
 })
+
+const uvClient = uvClientNew.loginAsOwner()
 
 // Discord bot stuffs
 bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {

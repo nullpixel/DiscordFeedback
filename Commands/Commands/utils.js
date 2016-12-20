@@ -39,20 +39,20 @@ commands['uv'] = {
   adminOnly: true,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
-    uvClient.loginAsOwner()
-
-    uvClient.get(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
-      .then(function (suggestions) {
-        var suggest = JSON.stringify(suggestions)
-        //message.channel.sendMessage('Ok, Here is all the comments: \n```json\n', suggest, '\n```')
-        message.channel.sendMessage(['Ok, Here are all suggestions:\n```json\n' + suggest.trim() + '\n```'])
-        //console.log(suggest)
-      })
-      .catch(function (error) {
-        // error handling
-        console.error(error)
-      })
+    var suggest = listSuggestions(Config, uvClient)
+    message.channel.sendMessage(['```js\n' + suggest + '\n```'])
   }
 }
 
 exports.Commands = commands
+
+function listSuggestions (Config, uvClient) {
+  uvClient.get(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
+    .then(function (suggestions) {
+      return JSON.stringify(suggestions)
+    })
+    .catch(function (error) {
+      // error handling
+      console.error(error)
+    })
+}
