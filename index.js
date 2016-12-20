@@ -1,6 +1,8 @@
 const Discordie = require('discordie')
 const UserVoice = require('uservoice-nodejs')
-const bot = new Discordie({autoReconnect: true})
+const bot = new Discordie({
+  autoReconnect: true
+})
 const Events = Discordie.Events
 const Config = require('./config.js')
 const Commands = require('./Utils/command_engine').Commands

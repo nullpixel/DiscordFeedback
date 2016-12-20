@@ -39,7 +39,7 @@ commands['uservoice'] = {
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     uvClient.loginAsOwner()
-    
+
     uvClient.get('tickets.json')
       .then(function (tickets) {
         message.reply('Ok, Here is all the tickets \'\'\'', tickets, ' \'\'\'')
