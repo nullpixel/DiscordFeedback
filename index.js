@@ -1,12 +1,12 @@
 const Discordie = require('discordie')
 const UserVoice = require('uservoice-nodejs')
-const bot = new Discordie({
-  autoReconnect: true
-})
 const Events = Discordie.Events
 const Config = require('./config.js')
 const Commands = require('./Utils/command_engine').Commands
 const AccessChecker = require('./Utils/access_checker')
+const bot = new Discordie({
+  autoReconnect: true
+})
 
 // UserVoice API V2 Variables
 var v2Client = new UserVoice.ClientV2({
