@@ -66,5 +66,5 @@ bot.Dispatcher.on(Events.GATEWAY_RESUMED, () => {
 })
 
 bot.connect({
-  token: Config.token
+  token: Config.discord.token
 })
