@@ -39,20 +39,27 @@ commands['uv'] = {
   adminOnly: true,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
-    var suggest = listSuggestions(Config, uvClient)
-    message.channel.sendMessage(['```js\n' + suggest + '\n```'])
+    var uV = Array.toString(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
+    listSuggestions(Config, uvClient)
+      .then(function (suggestionsList) {
+        var suggestList = JSON.stringify(suggestionsList)
+        message.channel.sendMessage(['```json\n' + suggestList + '\n```'])
+      })
+      .catch(function (e) {
+        console.log(e)
+        message.channel.sendMessage(['There was an error accessing:' + '\nURL=``' + uV + '``'])
+      })
   }
 }
 
 exports.Commands = commands
 
 function listSuggestions (Config, uvClient) {
-  uvClient.get(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
-    .then(function (suggestions) {
-      return JSON.stringify(suggestions)
-    })
-    .catch(function (error) {
-      // error handling
-      console.error(error)
-    })
+  return new Promise((resolve, reject) => {
+    uvClient.loginAsOwner()
+    var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json']
+    uvClient.get(uV.toString())
+      .then(resolve)
+      .catch(reject)
+  })
 }
