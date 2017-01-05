@@ -35,20 +35,50 @@ commands['shutdown'] = {
   }
 }
 
-commands['uv'] = {
+commands['uv-suggest'] = {
   adminOnly: true,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
-    var uV = Array.toString(['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'])
-    listSuggestions(Config, uvClient)
+    if (suffix === 'list') {
+      listSuggestions(Config, uvClient)
       .then(function (suggestionsList) {
-        var suggestList = JSON.stringify(suggestionsList)
-        message.channel.sendMessage(['```json\n' + suggestList + '\n```'])
+        suggestionsList.suggestions.forEach(function (suggestions) {
+          message.channel.sendMessage('', false, {
+            title: suggestions.title,
+            url: suggestions.url,
+            timestamp: suggestions.created_at,
+            color: 0x3498db,
+            author: {
+              name: suggestions.creator.name,
+              url: suggestions.creator.url,
+              icon_url: suggestions.creator.avatar_url
+            },
+            fields: [
+              {
+                name: 'Votes',
+                value: suggestions.vote_count
+              },
+              {
+                name: 'Created',
+                value: suggestions.topic.created_at
+              },
+              {
+                name: 'Last updated',
+                value: suggestions.topic.updated_at
+              }
+            ]
+          })
+          .catch(function (e) {
+            console.log(e.response.error)
+            message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
+          })
+        })
       })
       .catch(function (e) {
         console.log(e)
-        message.channel.sendMessage(['There was an error accessing:' + '\nURL=``' + uV + '``'])
+        message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
       })
+    }
   }
 }
 

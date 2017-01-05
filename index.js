@@ -61,7 +61,6 @@ bot.Dispatcher.on(Events.GATEWAY_READY, () => {
   var channel = guild.textChannels.find(c => c.name === 'bot-spam')
 
   channel.sendMessage('Bot is Online!')
-
 })
 
 bot.Dispatcher.on(Events.DISCONNECTED, (e) => {
