@@ -38,3 +38,6 @@ jspm_packages
 
 # Login details and other private stuff
 config.js
+
+# Example api json responses
+example.*.json
