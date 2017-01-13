@@ -56,7 +56,7 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
 bot.Dispatcher.on(Events.GATEWAY_READY, () => {
   console.log('Feedback bot is ready!')
   // get a channel from guild:
-  var guild = bot.Guilds.find(g => g.name === 'Discord-Feedback')
+  var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
   // guild.textChannels is an array0
   var channel = guild.textChannels.find(c => c.name === 'bot-spam')
 
