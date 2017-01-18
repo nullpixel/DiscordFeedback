@@ -87,28 +87,80 @@ commands['uv-suggest'] = {
 }
 
 commands['uv-search'] = {
-  adminOnly: true,
+  adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '?query=' + encodeURIComponent(suffix.trim())].toString()
     message.channel.sendTyping()
-    if (suffix === null) {
-      message.channel.sendMessage('You need to specify a search term.')
+    if (suffix === '') {
+      message.channel.sendMessage('You need to specify a search query.')
     } else {
-      search(Config, uvClient, suffix)
-        .then(function (search) {
-          search.suggestions.forEach(function (suggest) {
-            var searchSuggest = JSON.stringify(suggest)
-            message.channel.sendMessage(['\n```\n' + searchSuggest + '\n```'])
-              .catch(function (e) {
-                console.log(e)
-                message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
+      search(Config, uvClient, suffix).then(function (search) {
+          if (search.response_data.total_records === 0) {
+            message.channel.sendMessage(['There isn\'t any suggestions available with that search. This probably means that someone hasn\'t made a suggestion with that idea yet. (or like you didn\'t do a good search) :wink: \nClick this link to get started with submitting your idea/suggestion: ' + userVoiceURL])
+          } else {
+            message.channel.sendMessage('We just sent you a PM with the results.')
+            message.channel.sendTyping()
+            message.author.openDM().then(function (dm) {
+              dm.sendMessage('Here are the suggestions that you searched for:')
+            })
+            search.suggestions.forEach(function (suggest) {
+              message.author.openDM().then(function (dm) {
+                dm.sendTyping()
+                dm.sendMessage('', false, {
+                  title: suggest.title,
+                  url: suggest.url,
+                  description: suggest.text,
+                  color: 0x3498db,
+                  author: {
+                    name: suggest.creator.name,
+                    url: suggest.creator.url,
+                    icon_url: suggest.creator.avatar_url
+                  },
+                  fields: [{
+                    name: 'Votes',
+                    value: suggest.vote_count
+                  }, {
+                    name: 'Created',
+                    value: new Date(suggest.created_at).toUTCString()
+                  }, {
+                    name: 'Last updated',
+                    value: new Date(suggest.updated_at).toUTCString()
+                  }]
+
+                }).catch(function (e) {
+                  console.log(e);
+                  sendTyping()
+                  message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
+                })
+                dm.close()
               })
-          })
+            })
+            message.author.openDM().then(function (dm) {
+              dm.sendTyping()
+              dm.sendMessage('For a full list of results, please check out this link:', false, {
+                title: "UserVoice Suggestions Search",
+                url: userVoiceURL,
+                description: [`"` + suffix + `"` + 'search results for ' + message.author.nickMention].toString(),
+                color: 0x3498db,
+                author: {
+                  name: message.author.username,
+                  icon_url: message.author.avatarURL
+                }
+              }).catch(function (e) {
+                console.log(e)
+                var er = JSON.stringify(e)
+                message.channel.sendTyping()
+                message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+              })
+              dm.close()
+            })
+          }
         })
-        .catch(function (e) {
+        .catch(function (error) {
           console.log(e)
-          var er = JSON.stringify(e)
-          message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+          message.channel.sendTyping()
+          message.channel.sendMessage('An Error occured, & the admins have been notified.')
         })
     }
   }
@@ -133,7 +185,8 @@ function search(Config, uvClient, query) {
     uvClient.loginAsOwner()
     var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/search.json']
     uvClient.get(uV.toString(), {
-        query: query
+        query: query,
+        per_page: "5"
       })
       .then(resolve)
       .catch(reject)
