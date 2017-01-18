@@ -1,5 +1,6 @@
 var commands = []
 
+// Replies Pong! to ping command
 commands.ping = {
   adminOnly: false,
   modOnly: false,
@@ -8,6 +9,7 @@ commands.ping = {
   }
 }
 
+// Repeats message said by admin but no one else
 commands['admin-only'] = {
   adminOnly: true,
   modOnly: false,
@@ -16,6 +18,7 @@ commands['admin-only'] = {
   }
 }
 
+// Repeats message said by mod but no one else
 commands['mod-only'] = {
   adminOnly: false,
   modOnly: true,
@@ -24,6 +27,7 @@ commands['mod-only'] = {
   }
 }
 
+// Closes gateway connection and stops the bot
 commands['shutdown'] = {
   adminOnly: true,
   modOnly: false,
@@ -35,76 +39,36 @@ commands['shutdown'] = {
   }
 }
 
-commands['uv-suggest'] = {
-  adminOnly: true,
-  modOnly: false,
-  fn: function (client, message, suffix, UserVoice, uvClient, Config) {
-    if (suffix === 'list') {
-      message.channel.sendTyping()
-      listSuggestions(Config, uvClient)
-        .then(function (suggestionsList) {
-          suggestionsList.suggestions.forEach(function (suggestions) {
-            message.channel.sendMessage('', false, {
-                title: suggestions.title,
-                url: suggestions.url,
-                timestamp: suggestions.created_at,
-                color: 0x3498db,
-                author: {
-                  name: suggestions.creator.name,
-                  url: suggestions.creator.url,
-                  icon_url: suggestions.creator.avatar_url
-                },
-                fields: [{
-                    name: 'Votes',
-                    value: suggestions.vote_count
-                  },
-                  {
-                    name: 'Created',
-                    value: suggestions.topic.created_at
-                  },
-                  {
-                    name: 'Last updated',
-                    value: suggestions.topic.updated_at
-                  }
-                ]
-              })
-              .catch(function (e) {
-                console.log(e.response.error)
-                message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
-              })
-          })
-        })
-        .catch(function (e) {
-          console.log(e)
-          message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
-        })
-    } else if (suffix === null) {
-      message.channel.sendMessage('You need to specify a command.')
-    } else {
-      message.channel.sendMessage('No such command. :cry:')
-    }
-  }
-}
-
+// Searchs for specfied search term through the UserVoice V1 API
 commands['uv-search'] = {
   adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    // Is the full UserVoice search URL
     var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '?query=' + encodeURIComponent(suffix.trim())].toString()
+    // sends typing to channel before saying anything
     message.channel.sendTyping()
+    // checks if the suffix is blank, if so ask for a search query
     if (suffix === '') {
       message.channel.sendMessage('You need to specify a search query.')
+    // If not call the search function to actually search via. UserVoice's API for the query.
+    // (UserVoice does the actual searching in their API and returns us the json results)
     } else {
+      // call the search function with specfied variables, then resolves the Promise
       search(Config, uvClient, suffix).then(function (search) {
+          // Checks if the total returned suggestions is 0, and sends a message to the channel
           if (search.response_data.total_records === 0) {
             message.channel.sendMessage(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL])
+          // If there is 1 or more suggestions returned send the user a PM with the results
           } else {
             message.channel.sendMessage('We just sent you a PM with the results.')
-            message.channel.sendTyping()
             message.author.openDM().then(function (dm) {
+              dm.sendTyping()
               dm.sendMessage('Here are the suggestions that you searched for:')
             })
+            // For each suggestion in the response array, send a embed
             search.suggestions.forEach(function (suggest) {
+              // open a new DM channel with the user
               message.author.openDM().then(function (dm) {
                 dm.sendTyping()
                 dm.sendMessage('', false, {
@@ -127,16 +91,19 @@ commands['uv-search'] = {
                     name: 'Last updated',
                     value: new Date(suggest.updated_at).toUTCString()
                   }]
-
+                // If the send embed message fail, log the error to console then send a shortened version to the chat
                 }).catch(function (e) {
                   console.log(e);
-                  sendTyping()
+                  messagse.channel.sendTyping()
                   message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
                 })
+                // close the DM channel
                 dm.close()
               })
             })
+            // checks if the total suggestions returned is 5 or more, if so send an embed for the full results
             if (search.response_data.total_records >= 5) {
+              // open a DM channel to send the message
               message.author.openDM().then(function (dm) {
                 dm.sendTyping()
                 dm.sendMessage('For a full list of results, please check out this link:', false, {
@@ -148,17 +115,21 @@ commands['uv-search'] = {
                     name: message.author.username,
                     icon_url: message.author.avatarURL
                   }
+                // if sending the message fails, catch that error and send it to console and chat
                 }).catch(function (e) {
                   console.log(e)
+                  // stringify the json so it can be printed in the chat
                   var er = JSON.stringify(e)
                   message.channel.sendTyping()
                   message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
                 })
+                // close the dm channel
                 dm.close()
               })
             }
           }
         })
+        // if it fails, log the error to console and report it failed to chat.
         .catch(function (error) {
           console.log(e)
           message.channel.sendTyping()
@@ -170,26 +141,19 @@ commands['uv-search'] = {
 
 exports.Commands = commands
 
-function listSuggestions(Config, uvClient) {
-  return new Promise((resolve, reject) => {
-    uvClient.loginAsOwner()
-    var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json']
-    uvClient.get(uV.toString(), {
-        sort: 'newest'
-      })
-      .then(resolve)
-      .catch(reject)
-  })
-}
-
+// Logs into the V1 UserVoice API
 function search(Config, uvClient, query) {
+  // return a Promise since uvClient.get() returns a Promise
   return new Promise((resolve, reject) => {
     uvClient.loginAsOwner()
-    var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/search.json']
-    uvClient.get(uV.toString(), {
+    // Convert the UserVoice API url to a string (Needed because of forumId)
+    var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/search.json'].toString()
+    // Sends a get request to the URL with the parameters
+    uvClient.get(uV, {
         query: query,
-        per_page: "5"
+        per_page: "5" // set to five results so no more appear in the suggestion array then that (even if there is more results)
       })
+      // js Promise stuff
       .then(resolve)
       .catch(reject)
   })
