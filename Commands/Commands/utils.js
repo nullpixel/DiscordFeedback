@@ -97,7 +97,7 @@ commands['uv-search'] = {
     } else {
       search(Config, uvClient, suffix).then(function (search) {
           if (search.response_data.total_records === 0) {
-            message.channel.sendMessage(['There isn\'t any suggestions available with that search. This probably means that someone hasn\'t made a suggestion with that idea yet. (or like you didn\'t do a good search) :wink: \nClick this link to get started with submitting your idea/suggestion: ' + userVoiceURL])
+            message.channel.sendMessage(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL])
           } else {
             message.channel.sendMessage('We just sent you a PM with the results.')
             message.channel.sendTyping()
@@ -136,25 +136,27 @@ commands['uv-search'] = {
                 dm.close()
               })
             })
-            message.author.openDM().then(function (dm) {
-              dm.sendTyping()
-              dm.sendMessage('For a full list of results, please check out this link:', false, {
-                title: "UserVoice Suggestions Search",
-                url: userVoiceURL,
-                description: [`"` + suffix + `"` + 'search results for ' + message.author.nickMention].toString(),
-                color: 0x3498db,
-                author: {
-                  name: message.author.username,
-                  icon_url: message.author.avatarURL
-                }
-              }).catch(function (e) {
-                console.log(e)
-                var er = JSON.stringify(e)
-                message.channel.sendTyping()
-                message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+            if (search.response_data.total_records >= 5) {
+              message.author.openDM().then(function (dm) {
+                dm.sendTyping()
+                dm.sendMessage('For a full list of results, please check out this link:', false, {
+                  title: "UserVoice Suggestions Search",
+                  url: userVoiceURL,
+                  description: [`"` + suffix + `"` + 'search results for ' + message.author.nickMention].toString(),
+                  color: 0x3498db,
+                  author: {
+                    name: message.author.username,
+                    icon_url: message.author.avatarURL
+                  }
+                }).catch(function (e) {
+                  console.log(e)
+                  var er = JSON.stringify(e)
+                  message.channel.sendTyping()
+                  message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+                })
+                dm.close()
               })
-              dm.close()
-            })
+            }
           }
         })
         .catch(function (error) {
