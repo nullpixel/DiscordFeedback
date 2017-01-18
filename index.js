@@ -5,7 +5,8 @@ const Config = require('./config.js')
 const Commands = require('./Utils/command_engine').Commands
 const AccessChecker = require('./Utils/access_checker')
 const bot = new Discordie({
-  autoReconnect: true
+  autoReconnect: true,
+  messageCacheLimit:  Config.discord.messageCacheLimit
 })
 
 // UserVoice API V2 Variables

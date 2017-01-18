@@ -13,6 +13,8 @@ let Config = {
     domain: 'discordapp.com', // UserVoice domain
     key: 'loldiscord', // UserVoice API key
     secret: 'loldiscord', // UserVoice API secret
+    forumId: '575944', // ID of the suggestions forum
+    forumName: 'test', // URL name of suggestions forum
     trusted: true, // Is the key trusted by UserVoice?
     tokenRequestUrl: 'http://bing.com', // UserVoice API request token URL
     tokenAccessUrl: 'http://google.com', // UserVoice API access token URL,
