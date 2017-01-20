@@ -46,6 +46,8 @@ commands['uv-search'] = {
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     // Is the full UserVoice search URL
     var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '?query=' + encodeURIComponent(suffix.trim())].toString()
+    // sends url to #bot-log for reasons
+    message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(userVoiceURL)
     // sends typing to channel before saying anything
     message.channel.sendTyping()
     // checks if the suffix is blank, if so ask for a search query

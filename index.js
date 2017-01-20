@@ -38,8 +38,10 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
     suffix = c.message.content.substr(Config.discord.prefix.length).split(' ')
     suffix = suffix.slice(1, suffix.length).join(' ')
     var msg = c.message
-    // Checks if the user calling the command has the correct permissions
+    // Checks if the message is a command
     if (Commands[cmd]) {
+      msg.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + msg.author.username + '#' + msg.author.discriminator + '**' + ' did the command: ``' + msg.content + '``'])
+      // Check is the user calling the command has the correct permissions
       // if the command is restricted to mods, and the user isn't one, fail to exucute the command
       AccessChecker.getLevel(msg.member, (level) => {
         if (level === 0 && Commands[cmd].adminOnly === true || level === 0 && Commands[cmd].modOnly === true) {
