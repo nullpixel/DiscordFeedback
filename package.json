@@ -29,6 +29,6 @@
   "dependencies": {
     "discordie": "^0.10.0",
     "require-directory": "^2.1.1",
-    "uservoice-nodejs": "^0.0.11"
+    "uservoice-nodejs": "^0.0.13"
   }
 }
