@@ -10,7 +10,7 @@ const AccessChecker = require('./Utils/access_checker')
 // Connection Settings for the bot
 const bot = new Discordie({
   autoReconnect: true,
-  messageCacheLimit:  Config.discord.messageCacheLimit
+  messageCacheLimit: Config.discord.messageCacheLimit
 })
 
 // UserVoice API V2 Variables
@@ -40,7 +40,6 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
     var msg = c.message
     // Checks if the message is a command
     if (Commands[cmd]) {
-      msg.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + msg.author.username + '#' + msg.author.discriminator + '**' + ' did the command: ``' + msg.content + '``'])
       // Check is the user calling the command has the correct permissions
       // if the command is restricted to mods, and the user isn't one, fail to exucute the command
       AccessChecker.getLevel(msg.member, (level) => {
@@ -74,6 +73,8 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
 bot.Dispatcher.on(Events.GATEWAY_READY, () => {
   // Log to console that the bot is logged in
   console.log('Feedback bot is ready!')
+  // Set current game
+  bot.User.setGame('becoming sentiant')
   // Find the specified guild name in the list of connected guilds
   var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
   // Find the specified text channel in the guild specified above.
