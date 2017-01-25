@@ -152,9 +152,9 @@ commands['uv-comment'] = {
           var commentWEmail = suffix.split(' ').slice(3).join(' ')
           var suggestionID = suffix.split(' ')[1]
           var email = suffix.split(' ')[2]
-          var emailDefault = 'UserVoice.bot@discordapp.com'
+          var emailDefault = Config.UserVoice.email.trim()
           if (suffix.split(' ')[2].includes('@') && message.member.hasRole('Custodians')) {
-            createComment(Config, uvClient, suggestionID, email, commentWEmail).then(function (response) {
+            createComment(Config, uvClient, message, suggestionID, email, commentWEmail).then(function (response) {
               // sends comment and url to suggestion to #bot-log for reasons
               message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + commentWEmail + ' `` on ' + response.comment.suggestion.url])
               message.channel.sendMessage('Here is your sparkling new comment!', false, {
@@ -190,17 +190,25 @@ commands['uv-comment'] = {
                   value: new Date(response.comment.updated_at).toUTCString()
                 }]
               }).catch(function (error) {
-                console.log(error)
-                var err = JSON.stringify(error)
-                message.channel.sendMessage(['There was an error sending that message:\n```\n' + err + '\n```'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
+                console.error(error)
               })
-            }).catch(function (e) {
-              console.error(e)
+            }).catch(function (response) {
+              if (response.statusCode === '401') {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+              } else {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+              }
+              console.log(response)
             })
           } else if (suffix.split(' ')[2].includes('@') && (message.member.hasRole('Custodains') !== true)) {
-            message.channel.sendMessage('You don\'t have the Custodians role or higher, you are not allowed to use your email for this command.')
+            message.reply('You don\'t have the Custodians role or higher, you are not allowed to use your email for this command.')
           } else if (suffix.split(' ')[2].includes('@') !== true) {
-            createComment(Config, uvClient, suggestionID, emailDefault, comment).then(function (response) {
+            createComment(Config, uvClient, message, suggestionID, emailDefault, comment).then(function (response) {
               // sends comment and url to suggestion to #bot-log for reasons
               message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
               message.channel.sendMessage('Here is your sparkling new comment!', false, {
@@ -236,12 +244,20 @@ commands['uv-comment'] = {
                   value: new Date(response.comment.updated_at).toUTCString()
                 }]
               }).catch(function (error) {
-                console.log(error)
-                var err = JSON.stringify(error)
-                message.channel.sendMessage(['There was an error sending that message:\n```\n' + err + '\n```'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
+                console.error(error)
               })
-            }).catch(function (e) {
-              console.error(e)
+            }).catch(function (response) {
+              if (response.statusCode === 401) {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+              } else {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+              }
+              console.log(response)
             })
           }
         } else {
@@ -277,7 +293,7 @@ function search (Config, uvClient, query) {
   })
 }
 
-function createComment (Config, uvClient, suggestionID, email, comment) {
+function createComment (Config, uvClient, message, suggestionID, email, comment) {
   // return a Promise since uvClient.get() returns a Promise
   return new Promise((resolve, reject) => {
     uvClient.loginAs(email)
@@ -294,8 +310,17 @@ function createComment (Config, uvClient, suggestionID, email, comment) {
           .then(resolve)
           .catch(reject)
       }) // catch any errors from uservoice loginAsOwner and spit them out to console
-      .catch(function (error) {
-        console.log(error)
+      .catch(function (response) {
+        if (response.statusCode === '401') {
+          message.reply('There was an error processing that commend, the admins have been notified.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+        } else {
+          message.reply('There was an error processing that commend, the admins have been notified.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t') + '\n```'])
+        }
+        console.log(response)
       })
   })
 }
