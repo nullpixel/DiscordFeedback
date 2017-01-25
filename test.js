@@ -1,0 +1,1 @@
+message.member.hasRole('Custodians')

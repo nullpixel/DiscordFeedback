@@ -146,54 +146,110 @@ commands['uv-comment'] = {
   modOnly: true,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     if (suffix.split(' ')[0] === 'create') {
-      var comment = suffix.split(' ').slice(3).join(' ')
-      var suggestionID = suffix.split(' ')[1]
-      var email = suffix.split(' ')[2]
-      createComment(Config, uvClient, suggestionID, email, comment)
-        .then(function (response) {
-          // sends comment and url to suggestion to #bot-log for reasons
-          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
-          message.channel.sendMessage('Here is your sparkling new comment!', false, {
-            title: response.comment.suggestion.title,
-            url: response.comment.suggestion.url,
-            description: response.comment.suggestion.text,
-            color: 0x3498db,
-            author: {
-              name: response.comment.suggestion.creator.name,
-              url: response.comment.suggestion.creator.url,
-              icon_url: response.comment.suggestion.creator.avatar_url
-            },
-            fields: [{
-              name: 'Votes',
-              value: response.comment.suggestion.vote_count
-            }, {
-              name: 'Created',
-              value: new Date(response.comment.suggestion.created_at).toUTCString()
-            }, {
-              name: 'Last updated',
-              value: new Date(response.comment.suggestion.updated_at).toUTCString()
-            }, {
-              name: 'Comment Text',
-              value: response.comment.text
-            }, {
-              name: 'Comment State',
-              value: response.comment.state
-            }, {
-              name: 'Comment Created',
-              value: new Date(response.comment.created_at).toUTCString()
-            }, {
-              name: 'Comment Last Updated',
-              value: new Date(response.comment.updated_at).toUTCString()
-            }]
-          }).catch(function (error) {
-            console.log(error)
-            var err = JSON.stringify(error)
-            message.channel.sendMessage(['There was an error sending that message:\n```\n' + err + '\n```'])
-          })
-        })
-        .catch(function (e) {
-          console.error(e)
-        })
+      if (typeof Number(suffix.split(' ')[1]) === 'number') {
+        if (suffix.split(' ').length >= 3) {
+          var comment = suffix.split(' ').slice(2).join(' ')
+          var commentWEmail = suffix.split(' ').slice(3).join(' ')
+          var suggestionID = suffix.split(' ')[1]
+          var email = suffix.split(' ')[2]
+          var emailDefault = 'UserVoice.bot@discordapp.com'
+          if (suffix.split(' ')[2].includes('@') && message.member.hasRole('Custodians')) {
+            createComment(Config, uvClient, suggestionID, email, commentWEmail).then(function (response) {
+              // sends comment and url to suggestion to #bot-log for reasons
+              message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + commentWEmail + ' `` on ' + response.comment.suggestion.url])
+              message.channel.sendMessage('Here is your sparkling new comment!', false, {
+                title: response.comment.suggestion.title,
+                url: response.comment.suggestion.url,
+                description: response.comment.suggestion.text,
+                color: 0x3498db,
+                author: {
+                  name: response.comment.suggestion.creator.name,
+                  url: response.comment.suggestion.creator.url,
+                  icon_url: response.comment.suggestion.creator.avatar_url
+                },
+                fields: [{
+                  name: 'Votes',
+                  value: response.comment.suggestion.vote_count
+                }, {
+                  name: 'Created',
+                  value: new Date(response.comment.suggestion.created_at).toUTCString()
+                }, {
+                  name: 'Last updated',
+                  value: new Date(response.comment.suggestion.updated_at).toUTCString()
+                }, {
+                  name: 'Comment Text',
+                  value: response.comment.text
+                }, {
+                  name: 'Comment State',
+                  value: response.comment.state
+                }, {
+                  name: 'Comment Created',
+                  value: new Date(response.comment.created_at).toUTCString()
+                }, {
+                  name: 'Comment Last Updated',
+                  value: new Date(response.comment.updated_at).toUTCString()
+                }]
+              }).catch(function (error) {
+                console.log(error)
+                var err = JSON.stringify(error)
+                message.channel.sendMessage(['There was an error sending that message:\n```\n' + err + '\n```'])
+              })
+            }).catch(function (e) {
+              console.error(e)
+            })
+          } else if (suffix.split(' ')[2].includes('@') && (message.member.hasRole('Custodains') !== true)) {
+            message.channel.sendMessage('You don\'t have the Custodians role or higher, you are not allowed to use your email for this command.')
+          } else if (suffix.split(' ')[2].includes('@') !== true) {
+            createComment(Config, uvClient, suggestionID, emailDefault, comment).then(function (response) {
+              // sends comment and url to suggestion to #bot-log for reasons
+              message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
+              message.channel.sendMessage('Here is your sparkling new comment!', false, {
+                title: response.comment.suggestion.title,
+                url: response.comment.suggestion.url,
+                description: response.comment.suggestion.text,
+                color: 0x3498db,
+                author: {
+                  name: response.comment.suggestion.creator.name,
+                  url: response.comment.suggestion.creator.url,
+                  icon_url: response.comment.suggestion.creator.avatar_url
+                },
+                fields: [{
+                  name: 'Votes',
+                  value: response.comment.suggestion.vote_count
+                }, {
+                  name: 'Created',
+                  value: new Date(response.comment.suggestion.created_at).toUTCString()
+                }, {
+                  name: 'Last updated',
+                  value: new Date(response.comment.suggestion.updated_at).toUTCString()
+                }, {
+                  name: 'Comment Text',
+                  value: response.comment.text
+                }, {
+                  name: 'Comment State',
+                  value: response.comment.state
+                }, {
+                  name: 'Comment Created',
+                  value: new Date(response.comment.created_at).toUTCString()
+                }, {
+                  name: 'Comment Last Updated',
+                  value: new Date(response.comment.updated_at).toUTCString()
+                }]
+              }).catch(function (error) {
+                console.log(error)
+                var err = JSON.stringify(error)
+                message.channel.sendMessage(['There was an error sending that message:\n```\n' + err + '\n```'])
+              })
+            }).catch(function (e) {
+              console.error(e)
+            })
+          }
+        } else {
+          message.channel.sendMessage('Please include a comment. (otherwise why are you using this command?)')
+        }
+      } else {
+        message.channel.sendMessage('Please include a Suggestion ID.')
+      }
     } else if (suffix.split(' ')[0] === 'list') {
       message.channel.sendMessage('This command isn\'t implmented yet.')
     } else {
