@@ -143,7 +143,7 @@ commands['uv-search'] = {
 
 commands['uv-comment'] = {
   adminOnly: false,
-  modOnly: true,
+  modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     if (suffix.split(' ')[0] === 'create') {
       if (typeof Number(suffix.split(' ')[1]) === 'number') {
@@ -158,26 +158,14 @@ commands['uv-comment'] = {
                 message.channel.sendMessage('Here is your sparkling new comment!', false, {
                   title: response.comment.suggestion.title,
                   url: response.comment.suggestion.url,
-                  description: response.comment.suggestion.text,
+                  description: response.comment.text,
                   color: 0x3498db,
                   author: {
-                    name: response.comment.suggestion.creator.name,
-                    url: response.comment.suggestion.creator.url,
-                    icon_url: response.comment.suggestion.creator.avatar_url
+                    name: response.comment.creator.name,
+                    url: response.comment.creator.url,
+                    icon_url: response.comment.creator.avatar_url
                   },
                   fields: [{
-                    name: 'Votes',
-                    value: response.comment.suggestion.vote_count
-                  }, {
-                    name: 'Created',
-                    value: new Date(response.comment.suggestion.created_at).toUTCString()
-                  }, {
-                    name: 'Last updated',
-                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
-                  }, {
-                    name: 'Comment Text',
-                    value: response.comment.text
-                  }, {
                     name: 'Comment State',
                     value: response.comment.state
                   }, {
@@ -186,6 +174,15 @@ commands['uv-comment'] = {
                   }, {
                     name: 'Comment Last Updated',
                     value: new Date(response.comment.updated_at).toUTCString()
+                  }, {
+                    name: 'Votes For Suggestion',
+                    value: response.comment.suggestion.vote_count
+                  }, {
+                    name: 'Suggestion Created',
+                    value: new Date(response.comment.suggestion.created_at).toUTCString()
+                  }, {
+                    name: 'Suggestion Last updated',
+                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
                   }]
                 }).catch(function (error) {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
@@ -196,6 +193,10 @@ commands['uv-comment'] = {
                   message.reply('There was an error processing that commend, the admins have been notified.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+                } else if (response.statusCode === '404') {
+                  message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+                  message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+                  message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
                 } else {
                   message.reply('There was an error processing that commend, the admins have been notified.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
@@ -203,33 +204,21 @@ commands['uv-comment'] = {
                 }
                 console.log(response)
               })
-            } else if (suffix.split(' ')[2].includes('@') !== true) {
-              createComment(Config, uvClient, message, suggestionID, emailDefault, comment).then(function (response) {
+            } else if (response.users[0].email.includes('@') !== true) {
+              var commentWithOutEmail = [message.author.username + '#' + message.author.discriminator + ': '].toString() + comment
+              createComment(Config, uvClient, message, suggestionID, emailDefault, commentWithOutEmail).then(function (response) {
               // sends comment and url to suggestion to #bot-log for reasons
                 message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
                 message.channel.sendMessage('Here is your sparkling new comment!', false, {
                   title: response.comment.suggestion.title,
                   url: response.comment.suggestion.url,
-                  description: response.comment.suggestion.text,
+                  description: response.comment.text,
                   color: 0x3498db,
                   author: {
-                    name: response.comment.suggestion.creator.name,
-                    url: response.comment.suggestion.creator.url,
-                    icon_url: response.comment.suggestion.creator.avatar_url
+                    name: message.author.username,
+                    icon_url: message.author.avatarURL
                   },
                   fields: [{
-                    name: 'Votes',
-                    value: response.comment.suggestion.vote_count
-                  }, {
-                    name: 'Created',
-                    value: new Date(response.comment.suggestion.created_at).toUTCString()
-                  }, {
-                    name: 'Last updated',
-                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
-                  }, {
-                    name: 'Comment Text',
-                    value: response.comment.text
-                  }, {
                     name: 'Comment State',
                     value: response.comment.state
                   }, {
@@ -238,6 +227,15 @@ commands['uv-comment'] = {
                   }, {
                     name: 'Comment Last Updated',
                     value: new Date(response.comment.updated_at).toUTCString()
+                  }, {
+                    name: 'Votes For Suggestion',
+                    value: response.comment.suggestion.vote_count
+                  }, {
+                    name: 'Suggestion Created',
+                    value: new Date(response.comment.suggestion.created_at).toUTCString()
+                  }, {
+                    name: 'Suggestion Last updated',
+                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
                   }]
                 }).catch(function (error) {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
@@ -256,6 +254,8 @@ commands['uv-comment'] = {
                 console.log(response)
               })
             }
+          }).catch(function (error) {
+            console.log(error)
           })
           var emailDefault = Config.uservoice.email.trim()
         } else {
@@ -284,9 +284,7 @@ function getEmail (uvClient, guid) {
       .then(resolve)
       // Send the errors out so that they can be handled by the command area.
       // (error **could** be done here, but then we can't send scary msgs in chat as easily)
-      .catch(function (error) {
-        console.log(error)
-      })
+      .catch(reject)
     })
   })
 }
