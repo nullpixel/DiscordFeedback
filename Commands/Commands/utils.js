@@ -405,6 +405,8 @@ function getEmail (uvClient, guid) {
         // Send the errors out so that they can be handled by the command area.
         // (error **could** be done here, but then we can't send scary msgs in chat as easily)
         .catch(reject)
+    }).catch(function (response) {
+      console.error(response)
     })
   })
 }
@@ -444,19 +446,6 @@ function createComment (Config, uvClient, message, suggestionID, email, comment)
           .catch(reject)
       }) // catch any errors from uservoice loginAsOwner and spit them out to console
       .catch(function (response) {
-        if (response.statusCode === '401') {
-          message.reply('There was an error processing that commend, the admins have been notified.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
-        } else if (response.statusCode === '404') {
-          message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
-        } else {
-          message.reply('There was an error processing that commend, the admins have been notified.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t') + '\n```'])
-        }
         console.error(response)
       })
   })
@@ -471,6 +460,8 @@ function vote (message, uvClient, Config, email, suggestionID, vote) {
       })
         .then(resolve)
         .catch(reject)
+    }).catch(function (response) {
+      console.error(response)
     })
   })
 }
