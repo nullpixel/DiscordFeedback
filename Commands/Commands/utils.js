@@ -53,27 +53,27 @@ commands['uv-search'] = {
     // checks if the suffix is blank, if so ask for a search query
     if (suffix === '') {
       message.channel.sendMessage('You need to specify a search query.')
-      // If not call the search function to actually search via. UserVoice's API for the query.
-      // (UserVoice does the actual searching in their API and returns us the json results)
+    // If not call the search function to actually search via. UserVoice's API for the query.
+    // (UserVoice does the actual searching in their API and returns us the json results)
     } else {
       // call the search function with specfied variables, then resolves the Promise
       search(Config, uvClient, suffix).then(function (search) {
-          // Checks if the total returned suggestions is 0, and sends a message to the channel
+        // Checks if the total returned suggestions is 0, and sends a message to the channel
         if (search.response_data.total_records === 0) {
           message.channel.sendMessage(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL])
-            // If there is 1 or more suggestions returned send the user a PM with the results
+          // If there is 1 or more suggestions returned send the user a PM with the results
         } else {
           message.channel.sendMessage('We just sent you a PM with the results.')
           message.author.openDM().then(function (dm) {
             dm.sendTyping()
             dm.sendMessage('Here are the suggestions that you searched for:')
           })
-            // For each suggestion in the response array, send a embed
+          // For each suggestion in the response array, send a embed
           search.suggestions.forEach(function (suggest) {
-              // open a new DM channel with the user
+            // open a new DM channel with the user
             message.author.openDM().then(function (dm) {
               dm.sendTyping()
-              dm.sendMessage('', false, {
+              dm.sendMessage(suggest.url, false, {
                 title: suggest.title,
                 url: suggest.url,
                 description: suggest.text,
@@ -84,16 +84,16 @@ commands['uv-search'] = {
                   icon_url: suggest.creator.avatar_url
                 },
                 fields: [{
-                  name: 'Votes',
+                  name: 'Suggestion Votes',
                   value: suggest.vote_count
                 }, {
-                  name: 'Created',
+                  name: 'Suggestion Created',
                   value: new Date(suggest.created_at).toUTCString()
                 }, {
-                  name: 'Last updated',
+                  name: 'Suggestion Last updated',
                   value: new Date(suggest.updated_at).toUTCString()
                 }]
-                  // If the send embed message fail, log the error to console then send a shortened version to the chat
+              // If the send embed message fail, log the error to console then send a shortened version to the chat
               }).catch(function (e) {
                 console.error(e)
                 message.channel.sendTyping()
@@ -150,39 +150,39 @@ commands['uv-comment'] = {
         if (suffix.split(' ').length >= 3) {
           var comment = suffix.split(' ').slice(2).join(' ')
           var suggestionID = suffix.split(' ')[1]
-          getEmail(uvClient, message.author.id).then(function (response) {
-            if (response.users[0].email.includes('@')) {
-              createComment(Config, uvClient, message, suggestionID, response.users[0].email, comment).then(function (response) {
-              // sends comment and url to suggestion to #bot-log for reasons
-                message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
-                message.channel.sendMessage('Here is your sparkling new comment!', false, {
-                  title: response.comment.suggestion.title,
-                  url: response.comment.suggestion.url,
-                  description: response.comment.text,
+          getEmail(uvClient, message.author.id).then(function (email) {
+            if (email.users[0].email.includes('@')) {
+              createComment(Config, uvClient, message, suggestionID, email.users[0].email, comment).then(function (commentResponse) {
+                // sends comment and url to suggestion to #bot-log for reasons
+                message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + commentResponse.comment.suggestion.url])
+                message.channel.sendMessage(['Here is your sparkling new comment! ' + commentResponse.comment.suggestion.url], false, {
+                  title: commentResponse.comment.suggestion.title,
+                  url: commentResponse.comment.suggestion.url,
+                  description: commentResponse.comment.text,
                   color: 0x3498db,
                   author: {
-                    name: response.comment.creator.name,
-                    url: response.comment.creator.url,
-                    icon_url: response.comment.creator.avatar_url
+                    name: commentResponse.comment.creator.name,
+                    url: commentResponse.comment.creator.url,
+                    icon_url: commentResponse.comment.creator.avatar_url
                   },
                   fields: [{
                     name: 'Comment State',
-                    value: response.comment.state
+                    value: commentResponse.comment.state
                   }, {
                     name: 'Comment Created',
-                    value: new Date(response.comment.created_at).toUTCString()
+                    value: new Date(commentResponse.comment.created_at).toUTCString()
                   }, {
                     name: 'Comment Last Updated',
-                    value: new Date(response.comment.updated_at).toUTCString()
+                    value: new Date(commentResponse.comment.updated_at).toUTCString()
                   }, {
                     name: 'Votes For Suggestion',
-                    value: response.comment.suggestion.vote_count
+                    value: commentResponse.comment.suggestion.vote_count
                   }, {
                     name: 'Suggestion Created',
-                    value: new Date(response.comment.suggestion.created_at).toUTCString()
+                    value: new Date(commentResponse.comment.suggestion.created_at).toUTCString()
                   }, {
                     name: 'Suggestion Last updated',
-                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
+                    value: new Date(commentResponse.comment.suggestion.updated_at).toUTCString()
                   }]
                 }).catch(function (error) {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
@@ -202,17 +202,17 @@ commands['uv-comment'] = {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
                 }
-                console.log(response)
+                console.error(response)
               })
-            } else if (response.users[0].email.includes('@') !== true) {
+            } else if (email.users[0].email.includes('@') !== true) {
               var commentWithOutEmail = [message.author.username + '#' + message.author.discriminator + ': '].toString() + comment
-              createComment(Config, uvClient, message, suggestionID, emailDefault, commentWithOutEmail).then(function (response) {
-              // sends comment and url to suggestion to #bot-log for reasons
-                message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + response.comment.suggestion.url])
-                message.channel.sendMessage('Here is your sparkling new comment!', false, {
-                  title: response.comment.suggestion.title,
-                  url: response.comment.suggestion.url,
-                  description: response.comment.text,
+              createComment(Config, uvClient, message, suggestionID, emailDefault, commentWithOutEmail).then(function (commentResponse) {
+                // sends comment and url to suggestion to #bot-log for reasons
+                message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + commentResponse.comment.suggestion.url])
+                message.channel.sendMessage(['Here is your sparkling new comment! ' + commentResponse.comment.suggestion.url], false, {
+                  title: commentResponse.comment.suggestion.title,
+                  url: commentResponse.comment.suggestion.url,
+                  description: commentResponse.comment.text,
                   color: 0x3498db,
                   author: {
                     name: message.author.username,
@@ -220,22 +220,22 @@ commands['uv-comment'] = {
                   },
                   fields: [{
                     name: 'Comment State',
-                    value: response.comment.state
+                    value: commentResponse.comment.state
                   }, {
                     name: 'Comment Created',
-                    value: new Date(response.comment.created_at).toUTCString()
+                    value: new Date(commentResponse.comment.created_at).toUTCString()
                   }, {
                     name: 'Comment Last Updated',
-                    value: new Date(response.comment.updated_at).toUTCString()
+                    value: new Date(commentResponse.comment.updated_at).toUTCString()
                   }, {
                     name: 'Votes For Suggestion',
-                    value: response.comment.suggestion.vote_count
+                    value: commentResponse.comment.suggestion.vote_count
                   }, {
                     name: 'Suggestion Created',
-                    value: new Date(response.comment.suggestion.created_at).toUTCString()
+                    value: new Date(commentResponse.comment.suggestion.created_at).toUTCString()
                   }, {
                     name: 'Suggestion Last updated',
-                    value: new Date(response.comment.suggestion.updated_at).toUTCString()
+                    value: new Date(commentResponse.comment.suggestion.updated_at).toUTCString()
                   }]
                 }).catch(function (error) {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
@@ -246,16 +246,20 @@ commands['uv-comment'] = {
                   message.reply('There was an error processing that commend, the admins have been notified.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+                } else if (response.statusCode === '404') {
+                  message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+                  message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+                  message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
                 } else {
                   message.reply('There was an error processing that commend, the admins have been notified.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
                 }
-                console.log(response)
+                console.error(response)
               })
             }
           }).catch(function (error) {
-            console.log(error)
+            console.error(error)
           })
           var emailDefault = Config.uservoice.email.trim()
         } else {
@@ -272,6 +276,122 @@ commands['uv-comment'] = {
   }
 }
 
+commands['vote'] = {
+  adminOnly: false,
+  modOnly: false,
+  fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    if (suffix.split(' ').length >= 3) {
+      message.reply('This command only takes 1 suggestion ID as a argument')
+    } else if (suffix.split(' ').length >= 2) {
+      getEmail(uvClient, message.author.id).then(function (email) {
+        if (email.users[0].email.includes('@')) {
+          if (suffix.split(' ')[1] === 'vote') {
+            vote(message, uvClient, Config, email.users[0].email, suffix.split(' ')[0], 1)
+            .then(function (vote) {
+              var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '/suggestions/' + suffix.split(' ')[0]].toString()
+              message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' voted on ' + userVoiceURL])
+              message.channel.sendMessage(['You successfully voted on ' + userVoiceURL], null, {
+                title: vote.suggestion.title,
+                url: vote.suggestion.url,
+                description: vote.suggestion.text,
+                color: 0x3498db,
+                author: {
+                  name: vote.suggestion.creator.name,
+                  url: vote.suggestion.creator.url,
+                  icon_url: vote.suggestion.creator.avatar_url
+                },
+                fields: [{
+                  name: 'Suggestion Votes',
+                  value: vote.suggestion.vote_count
+                }, {
+                  name: 'Suggestion Created',
+                  value: new Date(vote.suggestion.created_at).toUTCString()
+                }, {
+                  name: 'Suggestion Last updated',
+                  value: new Date(vote.suggestion.updated_at).toUTCString()
+                }]
+              })
+            }).catch(function (response) {
+              if (response.statusCode === 401) {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a 401 error:')
+                console.error(response)
+              } else if (response.statusCode === '404') {
+                message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a 404 error:')
+                console.error(response)
+              } else {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a unknown error:')
+                console.error(response)
+              }
+            })
+          } else if (suffix.split(' ')[1] === 'unvote') {
+            vote(message, uvClient, Config, email.users[0].email, suffix.split(' ')[0], 0)
+            .then(function (responseVote) {
+              var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '/suggestions/' + suffix.split(' ')[0]].toString()
+              message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' voted on ' + userVoiceURL])
+              message.channel.sendMessage(['You successfully removed your vote on ' + userVoiceURL], null, {
+                title: vote.suggestion.title,
+                url: vote.suggestion.url,
+                description: vote.suggestion.text,
+                color: 0x3498db,
+                author: {
+                  name: vote.suggestion.creator.name,
+                  url: vote.suggestion.creator.url,
+                  icon_url: vote.suggestion.creator.avatar_url
+                },
+                fields: [{
+                  name: 'Suggestion Votes',
+                  value: vote.suggestion.vote_count
+                }, {
+                  name: 'Suggestion Created',
+                  value: new Date(vote.suggestion.created_at).toUTCString()
+                }, {
+                  name: 'Suggestion Last updated',
+                  value: new Date(vote.suggestion.updated_at).toUTCString()
+                }]
+              })
+            }).catch(function (response) {
+              if (response.statusCode === 401) {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a 401 error:')
+                console.error(response)
+              } else if (response.statusCode === '404') {
+                message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a 404 error:')
+                console.error(response)
+              } else {
+                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
+                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                console.error('UserVoice returned a unknown error:')
+                console.error(response)
+              }
+            })
+          } else {
+            message.reply('Please specify whether or not you want to vote, or unvote the specfied suggestion.')
+          }
+        } else if (email.users[0].email.includes('@') !== true) {
+          message.reply('We weren\'t able to find your email, so we can\'t vote for you. :cry:')
+        }
+      })
+    } else {
+      message.channel.sendMessage('Please specify a suggestion ID &/or, vote or unvote')
+    }
+  }
+}
+
 exports.Commands = commands
 
 function getEmail (uvClient, guid) {
@@ -280,11 +400,11 @@ function getEmail (uvClient, guid) {
       o.get('users/search.json', {
         guid: guid
       })
-      // Send the reply back to where this function is called so it can be processed.
-      .then(resolve)
-      // Send the errors out so that they can be handled by the command area.
-      // (error **could** be done here, but then we can't send scary msgs in chat as easily)
-      .catch(reject)
+        // Send the reply back to where this function is called so it can be processed.
+        .then(resolve)
+        // Send the errors out so that they can be handled by the command area.
+        // (error **could** be done here, but then we can't send scary msgs in chat as easily)
+        .catch(reject)
     })
   })
 }
@@ -328,12 +448,29 @@ function createComment (Config, uvClient, message, suggestionID, email, comment)
           message.reply('There was an error processing that commend, the admins have been notified.')
           message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
           message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+        } else if (response.statusCode === '404') {
+          message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
         } else {
           message.reply('There was an error processing that commend, the admins have been notified.')
           message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
           message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t') + '\n```'])
         }
-        console.log(response)
+        console.error(response)
       })
+  })
+}
+
+function vote (message, uvClient, Config, email, suggestionID, vote) {
+  return new Promise((resolve, reject) => {
+    uvClient.loginAs(email).then(function (v) {
+      var uv = ['forums/' + Config.uservoice.forumId + '/suggestions/' + suggestionID + '/votes.json'].toString()
+      v.post(uv, {
+        to: vote
+      })
+        .then(resolve)
+        .catch(reject)
+    })
   })
 }
