@@ -13,11 +13,13 @@ const bot = new Discordie({
   messageCacheLimit: Config.discord.messageCacheLimit
 })
 
+/* eslint-disable no-unused-vars */
 // UserVoice API V2 Variables
 var v2Client = new UserVoice.ClientV2({
   clientId: Config.uservoice.key,
   subdomain: Config.uservoice.subdomain
 })
+/* eslint-enable no-unused-vars */
 
 // UserVoice API V1 Variables
 // All of the Variables are trim()'d because the V1 client fails to work otherwise
@@ -55,14 +57,14 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
         // if the above checks don't fail, pass specific variables to the commands & exucute them.
         try {
           Commands[cmd].fn(bot, msg, suffix, UserVoice, uvClient, Config)
-        // if the command fails (unhandled exception, or bad code, etc.) return the error to console and
-        // reply that the command failed to process.
+          // if the command fails (unhandled exception, or bad code, etc.) return the error to console and
+          // reply that the command failed to process.
         } catch (e) {
           console.error(e)
           msg.reply('an error occured while proccessing this command, the admins have been alerted, please try again later')
         }
       })
-    // If the command a user specified doesn't exist, reply no such command.
+      // If the command a user specified doesn't exist, reply no such command.
     } else {
       msg.reply('No such command, sorry. :cry:')
     }
