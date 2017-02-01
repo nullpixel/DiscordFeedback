@@ -276,6 +276,28 @@ commands['uv-comment'] = {
   }
 }
 
+commands['duplicate'] = {
+  adminOnly: false,
+  modOnly: true,
+  fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    let content = suffix.split(' | ')
+    if (content.length !== 2) {
+      message.reply('This command only takes 2 arguments')
+    } else {
+      message.reply(`You are about to mark ${content[0]} as a duplicate of ${content[1]}, are you sure this is correct? (yes/no)`)
+      wait(client, message).then((response) => {
+        if (response === false) {
+          message.reply('You took too long to anwser, the operation has been cancelled.')
+        } else if (response === 'no') {
+          message.reply('Thanks for reconsidering, the operation has been cancelled.')
+        } else if (response === 'yes') {
+          message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!')
+        }
+      })
+    }
+  }
+}
+
 commands['submit'] = {
   adminOnly: false,
   modOnly: false,
@@ -286,6 +308,7 @@ commands['submit'] = {
     } else {
       let title = content[0]
       let description = content[1]
+      message.channel.sendTyping()
       getEmail(uvClient, message.author.id).then(function (user) {
         submit(user.users[0].email, title, description, uvClient, Config).then((resp) => {
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: ' + resp.suggestion.url])
@@ -476,6 +499,22 @@ commands['uv'] = {
 }
 
 exports.Commands = commands
+
+function wait (bot, msg) {
+  return new Promise((resolve, reject) => {
+    bot.Dispatcher.on('MESSAGE_CREATE', function doStuff (c) {
+      var time = setTimeout(() => { resolve(false); bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff) }, 7500) // We won't wait forever for the person to anwser
+      if (c.message.channel.id !== msg.channel.id) return
+      if (c.message.author.id !== msg.author.id) return
+      if (c.message.content.toLowerCase() !== 'yes' && c.message.content.toLowerCase() !== 'no') return
+      else {
+        resolve(c.message.content.toLowerCase())
+        bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
+        clearTimeout(time)
+      }
+    })
+  })
+}
 
 function getEmail (uvClient, guid) {
   return new Promise((resolve, reject) => {
