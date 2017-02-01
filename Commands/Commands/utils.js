@@ -291,6 +291,7 @@ commands['submit'] = {
       let description = content[1]
       getEmail(uvClient, message.author.id).then(function (user) {
         submit(user.users[0].email, title, description, uvClient, Config).then((resp) => {
+          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: ' + resp.suggestion.url])
           message.channel.sendMessage(['You successfully submitted feedback!'], null, {
             title: resp.suggestion.title,
             url: resp.suggestion.url,
