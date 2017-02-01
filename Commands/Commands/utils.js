@@ -280,9 +280,6 @@ commands['submit'] = {
   adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
-    let step = message.content.split(' ')
-    step.shift()
-    suffix = step.join(' ')
     let content = suffix.split(' | ')
     if (content.length !== 2) {
       message.reply('This command only takes 2 arguments')
@@ -292,7 +289,7 @@ commands['submit'] = {
       getEmail(uvClient, message.author.id).then(function (user) {
         submit(user.users[0].email, title, description, uvClient, Config).then((resp) => {
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: ' + resp.suggestion.url])
-          message.channel.sendMessage(['You successfully submitted feedback!'], null, {
+          message.channel.sendMessage(['You successfully submitted feedback! ' + resp.suggestion.url], null, {
             title: resp.suggestion.title,
             url: resp.suggestion.url,
             description: resp.suggestion.text,
@@ -310,11 +307,47 @@ commands['submit'] = {
               value: new Date(resp.suggestion.updated_at).toUTCString()
             }]
           })
-        }).catch((e) => {
-          console.error(e)
+        }).catch(function (response) {
+          if (response.statusCode === 401) {
+            message.reply('There was an error processing that command, the admins have been notified.')
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+            console.error('UserVoice returned a 401 error:')
+            console.error(response)
+          } else if (response.statusCode === '404') {
+            message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+            console.error('UserVoice returned a 404 error:')
+            console.error(response)
+          } else {
+            message.reply('There was an error processing that commend, the admins have been notified.')
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
+            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+            console.error('UserVoice returned a unknown error:')
+            console.error(response)
+          }
         })
-      }).catch((e) => {
-        console.error(e)
+      }).catch(function (response) {
+        if (response.statusCode === 401) {
+          message.reply('There was an error processing that command, the admins have been notified.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+          console.error('UserVoice returned a 401 error:')
+          console.error(response)
+        } else if (response.statusCode === '404') {
+          message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+          console.error('UserVoice returned a 404 error:')
+          console.error(response)
+        } else {
+          message.reply('There was an error processing that commend, the admins have been notified.')
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
+          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+          console.error('UserVoice returned a unknown error:')
+          console.error(response)
+        }
       })
     }
   }
