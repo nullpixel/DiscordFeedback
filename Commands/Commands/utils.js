@@ -292,6 +292,10 @@ commands['duplicate'] = {
           message.reply('Thanks for reconsidering, the operation has been cancelled.')
         } else if (response === 'yes') {
           message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!')
+          let uuid = require('uuid')
+          let code = uuid.v4().split('-')[0]
+          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
+          message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** marked ${content[0]} as a duplicate of ${content[1]}.\n\nThis report needs to be approved: **ID**: ${code}`)
         }
       })
     }

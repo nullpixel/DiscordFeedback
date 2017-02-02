@@ -11,9 +11,11 @@
     "type": "git",
     "url": "git+https://github.com/SteamingMutt/DiscordFeedback.git"
   },
-  "maintainers": [{
-    "name": "Benjamin Hoffmeyer (TheDoctorsLife)"
-  }],
+  "maintainers": [
+    {
+      "name": "Benjamin Hoffmeyer (TheDoctorsLife)"
+    }
+  ],
   "author": "Remco Jongschaap <hello@dougley.com>",
   "license": "GPL-3.0",
   "bugs": {
@@ -29,6 +31,7 @@
   "dependencies": {
     "discordie": "^0.10.0",
     "require-directory": "^2.1.1",
-    "uservoice-nodejs": "^0.0.13"
+    "uservoice-nodejs": "^0.0.13",
+    "uuid": "^3.0.1"
   }
 }
