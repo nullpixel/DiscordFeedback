@@ -302,6 +302,46 @@ commands['duplicate'] = {
   }
 }
 
+commands['approve'] = {
+  adminOnly: false,
+  modOnly: true,
+  fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    let content = suffix.split(' | ')
+    let channel = client.Channels.find((c) => c.name === 'approval-queue')
+    channel.fetchMessages().then(() => {
+      var toEdit = channel.messages.find((c) => c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
+      if (!toEdit) {
+        message.reply('No report was found with this ID')
+      } else {
+        message.reply(`You've successfully submitted your approval for this report.`)
+        toEdit.edit(toEdit.content + `\n✅ ${message.author.username}#${message.author.discriminator} **APPROVED** this report`)
+      }
+    })
+  }
+}
+
+commands['deny'] = {
+  adminOnly: false,
+  modOnly: true,
+  fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    let content = suffix.split(' | ')
+    if (content.length !== 2 || content[1].length === 0) {
+      message.reply('You need to supply a reason to deny this report.')
+      return
+    }
+    let channel = client.Channels.find((c) => c.name === 'approval-queue')
+    channel.fetchMessages().then(() => {
+      var toEdit = channel.messages.find((c) => c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
+      if (!toEdit) {
+        message.reply('No report was found with this ID')
+      } else {
+        message.reply(`You've successfully submitted your denial for this report.`)
+        toEdit.edit(toEdit.content + `\n🚫 ${message.author.username}#${message.author.discriminator} **DENIED** this report because: \`${content[1]}\``)
+      }
+    })
+  }
+}
+
 commands['submit'] = {
   adminOnly: false,
   modOnly: false,
