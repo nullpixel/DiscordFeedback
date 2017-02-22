@@ -1,4 +1,5 @@
 var commands = []
+var state = {}
 
 // Replies Pong! to ping command
 commands.ping = {
@@ -294,6 +295,12 @@ commands['duplicate'] = {
           message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!')
           let uuid = require('uuid')
           let code = uuid.v4().split('-')[0]
+          state[code] = {
+            denial: [],
+            approval: [],
+            user: message.author.id,
+            type: 'dupe'
+          }
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
           message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** marked ${content[0]} as a duplicate of ${content[1]}.\n\nThis report needs to be approved: **ID**: ${code}`)
         }
@@ -313,8 +320,20 @@ commands['approve'] = {
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
+        if (state[content[0]].denial.length === 3) {
+          message.reply('this report has already been closed.')
+          return
+        }
+        state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
         message.reply(`You've successfully submitted your approval for this report.`)
-        toEdit.edit(toEdit.content + `\n✅ ${message.author.username}#${message.author.discriminator} **APPROVED** this report`)
+        if (state[content[0]].approval.length === 3) {
+          approve(client, content[0])
+          setTimeout(() => {
+            toEdit.delete()
+          }, 2500)
+        } else {
+          toEdit.edit(toEdit.content + `\n✅ ${message.author.username}#${message.author.discriminator} **APPROVED** this report`)
+        }
       }
     })
   }
@@ -335,8 +354,20 @@ commands['deny'] = {
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
+        if (state[content[0]].denial.length === 3) {
+          message.reply('this report has already been closed.')
+          return
+        }
+        state[content[0]].denial.push(content[1])
         message.reply(`You've successfully submitted your denial for this report.`)
-        toEdit.edit(toEdit.content + `\n🚫 ${message.author.username}#${message.author.discriminator} **DENIED** this report because: \`${content[1]}\``)
+        if (state[content[0]].denial.length === 3) {
+          deny(client, content[0])
+          setTimeout(() => {
+            toEdit.delete()
+          }, 2500)
+        } else {
+          toEdit.edit(toEdit.content + `\n🚫 ${message.author.username}#${message.author.discriminator} **DENIED** this report because: \`${content[1]}\``)
+        }
       }
     })
   }
@@ -633,6 +664,28 @@ function submit (user, title, description, uvClient, Config) {
     }).catch(function (response) {
       console.error(response)
     })
+  })
+}
+
+function approve (client, id) {
+  client.Users.get(state[id].user).openDM().then(c => {
+    let message = [
+      'Hello there!',
+      `Good news! Your submission with ID ${id} has been approved!`,
+      "Thanks for participating, and we're looking forward to your next submission."
+    ]
+    c.sendMessage(message)
+  })
+}
+
+function deny (client, id) {
+  client.Users.get(state[id].user).openDM().then(c => {
+    let message = [
+      'Hello there!',
+      `Sorry, but your submission with ID ${id} has been denied.`,
+      "Thanks for participating, and we're looking forward to your next submission."
+    ]
+    c.sendMessage(message)
   })
 }
 
