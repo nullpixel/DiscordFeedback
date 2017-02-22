@@ -326,6 +326,7 @@ commands['approve'] = {
         }
         state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
         message.reply(`You've successfully submitted your approval for this report.`)
+        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
         if (state[content[0]].approval.length === 3) {
           approve(client, content[0])
           setTimeout(() => {
@@ -360,6 +361,7 @@ commands['deny'] = {
         }
         state[content[0]].denial.push(content[1])
         message.reply(`You've successfully submitted your denial for this report.`)
+        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' denied submission ' + content[0] + ' because `' + content[1] + '`'])
         if (state[content[0]].denial.length === 3) {
           deny(client, content[0])
           setTimeout(() => {
@@ -674,7 +676,7 @@ function approve (client, id) {
       `Good news! Your submission with ID ${id} has been approved!`,
       "Thanks for participating, and we're looking forward to your next submission."
     ]
-    c.sendMessage(message)
+    c.sendMessage(message.join('\n'))
   })
 }
 
@@ -685,7 +687,7 @@ function deny (client, id) {
       `Sorry, but your submission with ID ${id} has been denied.`,
       "Thanks for participating, and we're looking forward to your next submission."
     ]
-    c.sendMessage(message)
+    c.sendMessage(message.join('\n'))
   })
 }
 
