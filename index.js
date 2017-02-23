@@ -66,7 +66,7 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
       })
       // If the command a user specified doesn't exist, reply no such command.
     } else {
-      msg.reply('No such command, sorry. :cry:')
+      // msg.reply('No such command, sorry. :cry:')
     }
   }
 })
@@ -76,14 +76,14 @@ bot.Dispatcher.on(Events.GATEWAY_READY, () => {
   // Log to console that the bot is logged in
   console.log('Feedback bot is ready!')
   // Set current game
-  bot.User.setGame('becoming sentiant')
-  // Find the specified guild name in the list of connected guilds
-  var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
-  // Find the specified text channel in the guild specified above.
-  var channel = guild.textChannels.find(c => c.name === 'bot-spam')
+  // bot.User.setGame('becoming sentiant')
+  // // Find the specified guild name in the list of connected guilds
+  // var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
+  // // Find the specified text channel in the guild specified above.
+  // var channel = guild.textChannels.find(c => c.name === 'bot-spam')
 
-  // In the specified guild & channel, send to a "I'm online" msg
-  channel.sendMessage('Bot is Online!')
+  // // In the specified guild & channel, send to a "I'm online" msg
+  // channel.sendMessage('Bot is Online!')
 })
 
 // Log to console when the bot loses conntection with the delay till reconnect
