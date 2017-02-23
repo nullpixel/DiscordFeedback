@@ -299,7 +299,8 @@ commands['duplicate'] = {
             denial: [],
             approval: [],
             user: message.author.id,
-            type: 'dupe'
+            type: 'dupe',
+            remove: content[0]
           }
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
           message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** marked ${content[0]} as a duplicate of ${content[1]}.\n\nThis report needs to be approved: **ID**: ${code}`)
@@ -316,7 +317,7 @@ commands['approve'] = {
     let content = suffix.split(' | ')
     let channel = client.Channels.find((c) => c.name === 'approval-queue')
     channel.fetchMessages().then(() => {
-      var toEdit = channel.messages.find((c) => c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
+      var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
@@ -328,7 +329,7 @@ commands['approve'] = {
         message.reply(`You've successfully submitted your approval for this report.`)
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
         if (state[content[0]].approval.length === 3) {
-          approve(client, content[0])
+          approve(client, content[0], uvClient)
           setTimeout(() => {
             toEdit.delete()
           }, 2500)
@@ -351,7 +352,7 @@ commands['deny'] = {
     }
     let channel = client.Channels.find((c) => c.name === 'approval-queue')
     channel.fetchMessages().then(() => {
-      var toEdit = channel.messages.find((c) => c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
+      var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
@@ -669,7 +670,7 @@ function submit (user, title, description, uvClient, Config) {
   })
 }
 
-function approve (client, id) {
+function approve (client, id, UV) {
   client.Users.get(state[id].user).openDM().then(c => {
     let message = [
       'Hello there!',
@@ -677,6 +678,33 @@ function approve (client, id) {
       "Thanks for participating, and we're looking forward to your next submission."
     ]
     c.sendMessage(message.join('\n'))
+    switch (state[id].type) {
+      case 'dupe': {
+        deleteFromUV(state[id].remove, UV)
+        break
+      }
+      default: {
+        console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
+      }
+    }
+  })
+}
+
+function deleteFromUV (toDelete, uvClient) {
+  return new Promise((resolve, reject) => {
+    let UVRegex = /http[s]?:\/\/[\w.]*\/forums\/([0-9]{6,})-[\w]+\/suggestions\/([0-9]{8,})-[\w-]*/
+    let parts = toDelete.match(UVRegex)
+    if (parts === null) {
+      return reject('Invalid URL passed')
+    }
+    let forumID = parts[1]
+    let suggestionID = parts[2]
+    uvClient.loginAsOwner().then(function (v) {
+      var uv = `forums/${forumID}/suggestions/${suggestionID}.json`
+      v.delete(uv)
+        .then(resolve)
+        .catch(reject)
+    })
   })
 }
 
