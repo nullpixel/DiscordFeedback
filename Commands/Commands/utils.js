@@ -335,7 +335,7 @@ commands['approve'] = {
           state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
           message.reply(`You've successfully submitted your approval for this report.`)
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
-          if (state[content[0]].approval.length === 1) {
+          if (state[content[0]].approval.length === 3) {
             approve(client, content[0], uvClient, Config)
             setTimeout(() => {
               toEdit.delete()
@@ -399,6 +399,7 @@ commands['submit'] = {
     } else {
       let title = content[0]
       let description = content[1]
+      message.channel.sendTyping()
       getEmail(uvClient, message.author.id).then(function (user) {
         let uuid = require('uuid')
         let code = uuid.v4().split('-')[0]
