@@ -1,5 +1,6 @@
 var commands = []
 var state = {}
+var checker = require('../../Utils/access_checker')
 
 // Replies Pong! to ping command
 commands.ping = {
@@ -60,78 +61,78 @@ commands['uv-search'] = {
       // call the search function with specfied variables, then resolves the Promise
       search(Config, uvClient, suffix).then(function (search) {
           // Checks if the total returned suggestions is 0, and sends a message to the channel
-        if (search.response_data.total_records === 0) {
-          message.channel.sendMessage(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL])
+          if (search.response_data.total_records === 0) {
+            message.channel.sendMessage(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL])
             // If there is 1 or more suggestions returned send the user a PM with the results
-        } else {
-          message.channel.sendMessage('We just sent you a PM with the results.')
-          message.author.openDM().then(function (dm) {
-            dm.sendTyping()
-            dm.sendMessage('Here are the suggestions that you searched for:')
-          })
+          } else {
+            message.channel.sendMessage('We just sent you a PM with the results.')
+            message.author.openDM().then(function (dm) {
+              dm.sendTyping()
+              dm.sendMessage('Here are the suggestions that you searched for:')
+            })
             // For each suggestion in the response array, send a embed
-          search.suggestions.forEach(function (suggest) {
+            search.suggestions.forEach(function (suggest) {
               // open a new DM channel with the user
-            message.author.openDM().then(function (dm) {
-              dm.sendTyping()
-              dm.sendMessage(suggest.url, false, {
-                title: suggest.title,
-                url: suggest.url,
-                description: suggest.text,
-                color: 0x3498db,
-                author: {
-                  name: suggest.creator.name,
-                  url: suggest.creator.url,
-                  icon_url: suggest.creator.avatar_url
-                },
-                fields: [{
-                  name: 'Suggestion Votes',
-                  value: suggest.vote_count
-                }, {
-                  name: 'Suggestion Created',
-                  value: new Date(suggest.created_at).toUTCString()
-                }, {
-                  name: 'Suggestion Last updated',
-                  value: new Date(suggest.updated_at).toUTCString()
-                }]
+              message.author.openDM().then(function (dm) {
+                dm.sendTyping()
+                dm.sendMessage(suggest.url, false, {
+                  title: suggest.title,
+                  url: suggest.url,
+                  description: suggest.text,
+                  color: 0x3498db,
+                  author: {
+                    name: suggest.creator.name,
+                    url: suggest.creator.url,
+                    icon_url: suggest.creator.avatar_url
+                  },
+                  fields: [{
+                    name: 'Suggestion Votes',
+                    value: suggest.vote_count
+                  }, {
+                    name: 'Suggestion Created',
+                    value: new Date(suggest.created_at).toUTCString()
+                  }, {
+                    name: 'Suggestion Last updated',
+                    value: new Date(suggest.updated_at).toUTCString()
+                  }]
                   // If the send embed message fail, log the error to console then send a shortened version to the chat
-              }).catch(function (e) {
-                console.error(e)
-                message.channel.sendTyping()
-                message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
-              })
+                }).catch(function (e) {
+                  console.error(e)
+                  message.channel.sendTyping()
+                  message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
+                })
                 // close the DM channel
-              dm.close()
-            })
-          })
-            // checks if the total suggestions returned is 5 or more, if so send an embed for the full results
-          if (search.response_data.total_records >= 5) {
-              // open a DM channel to send the message
-            message.author.openDM().then(function (dm) {
-              dm.sendTyping()
-              dm.sendMessage('For a full list of results, please check out this link:', false, {
-                title: 'UserVoice Suggestions Search',
-                url: userVoiceURL,
-                description: [`"` + suffix + `"` + 'search results for ' + message.author.nickMention].toString(),
-                color: 0x3498db,
-                author: {
-                  name: message.author.username,
-                  icon_url: message.author.avatarURL
-                }
-                  // if sending the message fails, catch that error and send it to console and chat
-              }).catch(function (e) {
-                console.error(e)
-                  // stringify the json so it can be printed in the chat
-                var er = JSON.stringify(e)
-                message.channel.sendTyping()
-                message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+                dm.close()
               })
-                // close the dm channel
-              dm.close()
             })
+            // checks if the total suggestions returned is 5 or more, if so send an embed for the full results
+            if (search.response_data.total_records >= 5) {
+              // open a DM channel to send the message
+              message.author.openDM().then(function (dm) {
+                dm.sendTyping()
+                dm.sendMessage('For a full list of results, please check out this link:', false, {
+                  title: 'UserVoice Suggestions Search',
+                  url: userVoiceURL,
+                  description: [`"` + suffix + `"` + 'search results for ' + message.author.nickMention].toString(),
+                  color: 0x3498db,
+                  author: {
+                    name: message.author.username,
+                    icon_url: message.author.avatarURL
+                  }
+                  // if sending the message fails, catch that error and send it to console and chat
+                }).catch(function (e) {
+                  console.error(e)
+                  // stringify the json so it can be printed in the chat
+                  var er = JSON.stringify(e)
+                  message.channel.sendTyping()
+                  message.channel.sendMessage(['There was an error:' + '\n```\n' + er + '\n```'])
+                })
+                // close the dm channel
+                dm.close()
+              })
+            }
           }
-        }
-      })
+        })
         // if it fails, log the error to console and report it failed to chat.
         .catch(function (error) {
           console.error(error)
@@ -300,7 +301,8 @@ commands['duplicate'] = {
             approval: [],
             user: message.author.id,
             type: 'dupe',
-            remove: content[0]
+            remove: content[0],
+            sudo: true
           }
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
           message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** marked ${content[0]} as a duplicate of ${content[1]}.\n\nThis report needs to be approved: **ID**: ${code}`)
@@ -321,21 +323,27 @@ commands['approve'] = {
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
-        if (state[content[0]].denial.length === 3) {
-          message.reply('this report has already been closed.')
-          return
-        }
-        state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
-        message.reply(`You've successfully submitted your approval for this report.`)
-        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
-        if (state[content[0]].approval.length === 3) {
-          approve(client, content[0], uvClient)
-          setTimeout(() => {
-            toEdit.delete()
-          }, 2500)
-        } else {
-          toEdit.edit(toEdit.content + `\n✅ ${message.author.username}#${message.author.discriminator} **APPROVED** this report`)
-        }
+        checker.getLevel(message.member, (r) => {
+          if (state[content[0]].sudo && r !== 2) {
+            message.reply('You need to be an admin to approve this report.')
+            return
+          }
+          if (state[content[0]].denial.length === 3) {
+            message.reply('this report has already been closed.')
+            return
+          }
+          state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
+          message.reply(`You've successfully submitted your approval for this report.`)
+          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
+          if (state[content[0]].approval.length === 3) {
+            approve(client, content[0], uvClient)
+            setTimeout(() => {
+              toEdit.delete()
+            }, 2500)
+          } else {
+            toEdit.edit(toEdit.content + `\n✅ ${message.author.username}#${message.author.discriminator} **APPROVED** this report`)
+          }
+        })
       }
     })
   }
@@ -356,21 +364,26 @@ commands['deny'] = {
       if (!toEdit) {
         message.reply('No report was found with this ID')
       } else {
-        if (state[content[0]].denial.length === 3) {
-          message.reply('this report has already been closed.')
-          return
-        }
-        state[content[0]].denial.push(content[1])
-        message.reply(`You've successfully submitted your denial for this report.`)
-        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' denied submission ' + content[0] + ' because `' + content[1] + '`'])
-        if (state[content[0]].denial.length === 3) {
-          deny(client, content[0])
-          setTimeout(() => {
-            toEdit.delete()
-          }, 2500)
-        } else {
-          toEdit.edit(toEdit.content + `\n🚫 ${message.author.username}#${message.author.discriminator} **DENIED** this report because: \`${content[1]}\``)
-        }
+        checker.getLevel(message.member, (r) => {
+          if (state[content[0]].sudo && r !== 2) {
+            message.reply('You need to be an admin to deny this report.')
+          }
+          if (state[content[0]].denial.length === 3) {
+            message.reply('this report has already been closed.')
+            return
+          }
+          state[content[0]].denial.push(content[1])
+          message.reply(`You've successfully submitted your denial for this report.`)
+          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' denied submission ' + content[0] + ' because `' + content[1] + '`'])
+          if (state[content[0]].denial.length === 3) {
+            deny(client, content[0])
+            setTimeout(() => {
+              toEdit.delete()
+            }, 2500)
+          } else {
+            toEdit.edit(toEdit.content + `\n🚫 ${message.author.username}#${message.author.discriminator} **DENIED** this report because: \`${content[1]}\``)
+          }
+        })
       }
     })
   }
@@ -578,10 +591,13 @@ commands['uv'] = {
 
 exports.Commands = commands
 
-function wait (bot, msg) {
+function wait(bot, msg) {
   return new Promise((resolve, reject) => {
-    bot.Dispatcher.on('MESSAGE_CREATE', function doStuff (c) {
-      var time = setTimeout(() => { resolve(false); bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff) }, 7500) // We won't wait forever for the person to anwser
+    bot.Dispatcher.on('MESSAGE_CREATE', function doStuff(c) {
+      var time = setTimeout(() => {
+        resolve(false)
+        bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
+      }, 7500) // We won't wait forever for the person to anwser
       if (c.message.channel.id !== msg.channel.id) return
       if (c.message.author.id !== msg.author.id) return
       if (c.message.content.toLowerCase() !== 'yes' && c.message.content.toLowerCase() !== 'no') return
@@ -594,12 +610,12 @@ function wait (bot, msg) {
   })
 }
 
-function getEmail (uvClient, guid) {
+function getEmail(uvClient, guid) {
   return new Promise((resolve, reject) => {
     uvClient.loginAsOwner().then(function (o) {
       o.get('users/search.json', {
-        guid: guid
-      })
+          guid: guid
+        })
         // Send the reply back to where this function is called so it can be processed.
         .then(resolve)
         // Send the errors out so that they can be handled by the command area.
@@ -612,23 +628,23 @@ function getEmail (uvClient, guid) {
 }
 
 // Logs into the V1 UserVoice API
-function search (Config, uvClient, query) {
+function search(Config, uvClient, query) {
   // return a Promise since uvClient.get() returns a Promise
   return new Promise((resolve, reject) => {
     // Convert the UserVoice API url to a string (Needed because of forumId)
     var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/search.json'].toString()
     // Sends a get request to the URL with the parameters
     uvClient.get(uV, {
-      query: query,
-      per_page: '5' // set to five results so no more appear in the suggestion array then that (even if there is more results)
-    })
+        query: query,
+        per_page: '5' // set to five results so no more appear in the suggestion array then that (even if there is more results)
+      })
       // js Promise stuff
       .then(resolve)
       .catch(reject)
   })
 }
 
-function createComment (Config, uvClient, message, suggestionID, email, comment) {
+function createComment(Config, uvClient, message, suggestionID, email, comment) {
   // return a Promise since uvClient.get() returns a Promise
   return new Promise((resolve, reject) => {
     uvClient.loginAs(email)
@@ -637,10 +653,10 @@ function createComment (Config, uvClient, message, suggestionID, email, comment)
         var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/' + suggestionID + '/comments.json'].toString()
         // Sends a put request to the URL with the parameters, yes it needs to be like that, blame UserVoice for the stupidity of the parameters.
         t.post(uV, {
-          comment: {
-            text: comment
-          }
-        })
+            comment: {
+              text: comment
+            }
+          })
           // Send the errors out so that they can be handled by the command area. (error **could** be done here, but then we can't send scary msgs in chat as easily)
           .then(resolve)
           .catch(reject)
@@ -651,17 +667,17 @@ function createComment (Config, uvClient, message, suggestionID, email, comment)
   })
 }
 
-function submit (user, title, description, uvClient, Config) {
+function submit(user, title, description, uvClient, Config) {
   return new Promise((resolve, reject) => {
     uvClient.loginAs(user).then(function (v) {
       var uv = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'].toString()
       v.post(uv, {
-        suggestion: {
-          title: title,
-          text: description,
-          votes: 1
-        }
-      })
+          suggestion: {
+            title: title,
+            text: description,
+            votes: 1
+          }
+        })
         .then(resolve)
         .catch(reject)
     }).catch(function (response) {
@@ -670,7 +686,7 @@ function submit (user, title, description, uvClient, Config) {
   })
 }
 
-function approve (client, id, UV) {
+function approve(client, id, UV) {
   client.Users.get(state[id].user).openDM().then(c => {
     let message = [
       'Hello there!',
@@ -679,19 +695,21 @@ function approve (client, id, UV) {
     ]
     c.sendMessage(message.join('\n'))
     switch (state[id].type) {
-      case 'dupe': {
-        deleteFromUV(state[id].remove, UV).catch(console.error)
-        break
-      }
-      default: {
-        console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
-        break
-      }
+      case 'dupe':
+        {
+          deleteFromUV(state[id].remove, UV).catch(console.error)
+          break
+        }
+      default:
+        {
+          console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
+          break
+        }
     }
   })
 }
 
-function deleteFromUV (toDelete, uvClient) {
+function deleteFromUV(toDelete, uvClient) {
   return new Promise((resolve, reject) => {
     let UVRegex = /http[s]?:\/\/[\w.]*\/forums\/([0-9]{6,})-[\w-]+\/suggestions\/([0-9]{8,})-[\w-]*/
     let parts = toDelete.match(UVRegex)
@@ -709,7 +727,7 @@ function deleteFromUV (toDelete, uvClient) {
   })
 }
 
-function deny (client, id) {
+function deny(client, id) {
   client.Users.get(state[id].user).openDM().then(c => {
     let message = [
       'Hello there!',
@@ -720,13 +738,13 @@ function deny (client, id) {
   })
 }
 
-function vote (message, uvClient, Config, email, suggestionID, vote) {
+function vote(message, uvClient, Config, email, suggestionID, vote) {
   return new Promise((resolve, reject) => {
     uvClient.loginAs(email).then(function (v) {
       var uv = ['forums/' + Config.uservoice.forumId + '/suggestions/' + suggestionID + '/votes.json'].toString()
       v.post(uv, {
-        to: vote
-      })
+          to: vote
+        })
         .then(resolve)
         .catch(reject)
     }).catch(function (response) {
