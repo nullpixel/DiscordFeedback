@@ -328,15 +328,15 @@ commands['approve'] = {
             message.reply('You need to be an admin to approve this report.')
             return
           }
-          if (state[content[0]].denial.length === 3) {
+          if (state[content[0]].approval.length === 3) {
             message.reply('this report has already been closed.')
             return
           }
           state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
           message.reply(`You've successfully submitted your approval for this report.`)
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
-          if (state[content[0]].approval.length === 3) {
-            approve(client, content[0], uvClient)
+          if (state[content[0]].approval.length === 1) {
+            approve(client, content[0], uvClient, Config)
             setTimeout(() => {
               toEdit.delete()
             }, 2500)
@@ -399,69 +399,21 @@ commands['submit'] = {
     } else {
       let title = content[0]
       let description = content[1]
-      message.channel.sendTyping()
       getEmail(uvClient, message.author.id).then(function (user) {
-        submit(user.users[0].email, title, description, uvClient, Config).then((resp) => {
-          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: ' + resp.suggestion.url])
-          message.channel.sendMessage(['You successfully submitted feedback! ' + resp.suggestion.url], null, {
-            title: resp.suggestion.title,
-            url: resp.suggestion.url,
-            description: resp.suggestion.text,
-            color: 0x3498db,
-            author: {
-              name: resp.suggestion.creator.name,
-              url: resp.suggestion.creator.url,
-              icon_url: resp.suggestion.creator.avatar_url
-            },
-            fields: [{
-              name: 'Suggestion Created',
-              value: new Date(resp.suggestion.created_at).toUTCString()
-            }, {
-              name: 'Suggestion Last updated',
-              value: new Date(resp.suggestion.updated_at).toUTCString()
-            }]
-          })
-        }).catch(function (response) {
-          if (response.statusCode === 401) {
-            message.reply('There was an error processing that command, the admins have been notified.')
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
-            console.error('UserVoice returned a 401 error:')
-            console.error(response)
-          } else if (response.statusCode === '404') {
-            message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
-            console.error('UserVoice returned a 404 error:')
-            console.error(response)
-          } else {
-            message.reply('There was an error processing that commend, the admins have been notified.')
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
-            message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
-            console.error('UserVoice returned a unknown error:')
-            console.error(response)
-          }
-        })
-      }).catch(function (response) {
-        if (response.statusCode === 401) {
-          message.reply('There was an error processing that command, the admins have been notified.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
-          console.error('UserVoice returned a 401 error:')
-          console.error(response)
-        } else if (response.statusCode === '404') {
-          message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
-          console.error('UserVoice returned a 404 error:')
-          console.error(response)
-        } else {
-          message.reply('There was an error processing that commend, the admins have been notified.')
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' got a error from UserVoice. Here\'s the full error:'])
-          message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
-          console.error('UserVoice returned a unknown error:')
-          console.error(response)
+        let uuid = require('uuid')
+        let code = uuid.v4().split('-')[0]
+        state[code] = {
+          user: message.author.id,
+          denial: [],
+          approval: [],
+          email: user.users[0].email,
+          title: title,
+          desc: description,
+          type: 'newCard'
         }
+        message.channel.sendMessage(['You successfully submitted feedback!\nWe\'ve send it to the custodians for review, thanks!'])
+        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
+        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
   }
@@ -686,7 +638,7 @@ function submit(user, title, description, uvClient, Config) {
   })
 }
 
-function approve(client, id, UV) {
+function approve(client, id, UV, config) {
   client.Users.get(state[id].user).openDM().then(c => {
     let message = [
       'Hello there!',
@@ -698,6 +650,12 @@ function approve(client, id, UV) {
       case 'dupe':
         {
           deleteFromUV(state[id].remove, UV).catch(console.error)
+          break
+        }
+      case 'newCard':
+        {
+          let data = state[id]
+          submit(data.email, data.title, data.desc, UV, config).catch(console.error)
           break
         }
       default:
