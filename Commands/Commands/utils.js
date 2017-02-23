@@ -680,11 +680,12 @@ function approve (client, id, UV) {
     c.sendMessage(message.join('\n'))
     switch (state[id].type) {
       case 'dupe': {
-        deleteFromUV(state[id].remove, UV)
+        deleteFromUV(state[id].remove, UV).catch(console.error)
         break
       }
       default: {
         console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
+        break
       }
     }
   })
@@ -692,7 +693,7 @@ function approve (client, id, UV) {
 
 function deleteFromUV (toDelete, uvClient) {
   return new Promise((resolve, reject) => {
-    let UVRegex = /http[s]?:\/\/[\w.]*\/forums\/([0-9]{6,})-[\w]+\/suggestions\/([0-9]{8,})-[\w-]*/
+    let UVRegex = /http[s]?:\/\/[\w.]*\/forums\/([0-9]{6,})-[\w-]+\/suggestions\/([0-9]{8,})-[\w-]*/
     let parts = toDelete.match(UVRegex)
     if (parts === null) {
       return reject('Invalid URL passed')
