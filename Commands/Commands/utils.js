@@ -414,7 +414,7 @@ commands['submit'] = {
         }
         message.channel.sendMessage(['You successfully submitted feedback!\nWe\'ve send it to the custodians for review, thanks!'])
         message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
-        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
+        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['---------------------------------------------\n' + '**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
   }
