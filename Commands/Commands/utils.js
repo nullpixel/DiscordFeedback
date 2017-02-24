@@ -149,8 +149,8 @@ commands['comment'] = {
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     if (typeof Number(suffix.split(' ')[1]) === 'number') {
       if (suffix.split(' ').length >= 3) {
-        var comment = suffix.split(' ').slice(2).join(' ')
-        var suggestionID = suffix.split(' ')[1]
+        var comment = suffix.split(' ').slice(1).join(' ')
+        var suggestionID = suffix.split(' ')[0]
         getEmail(uvClient, message.author.id).then(function (email) {
           if (email.users[0].email.includes('@')) {
             createComment(Config, uvClient, message, suggestionID, email.users[0].email, comment).then(function (commentResponse) {
@@ -191,7 +191,7 @@ commands['comment'] = {
               })
             }).catch(function (response) {
               if (response.statusCode === '401') {
-                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.reply('There was an error processing that command, the admins have been notified.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
               } else if (response.statusCode === '404') {
@@ -199,7 +199,7 @@ commands['comment'] = {
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
               } else {
-                message.reply('There was an error processing that commend, the admins have been notified.')
+                message.reply('There was an error processing that command, the admins have been notified.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
               }
