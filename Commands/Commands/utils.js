@@ -297,7 +297,7 @@ commands['duplicate'] = {
             remove: content[0],
             sudo: true
           }
-          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
+          message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['---------------------------------------------\n' + '**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted a duplicate report: ' + code + ' (' + content[0] + ' vs ' + content[1] + ')'])
           message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** marked ${content[0]} as a duplicate of ${content[1]}.\n\nThis report needs to be approved: **ID**: ${code}`)
         }
       })
@@ -418,10 +418,10 @@ commands['submit'] = {
           desc: description,
           type: 'newCard'
         }
-        message.channel.sendMessage(['You successfully submitted feedback!\nWe\'ve send it to the custodians for review, thanks!']).then(deletThis)
+        message.channel.sendMessage(['Thank you for your feedback!\nWe\'ve send it to the custodians for review!']).then(deletThis)
         message.delete()
-        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
-        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['---------------------------------------------\n' + '**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
+        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
+        message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
   }
@@ -655,7 +655,7 @@ function approve(client, id, UV, config) {
     let message = [
       'Hello there!',
       `Good news! Your submission with ID ${id} has been approved!`,
-      "Thanks for participating, and we're looking forward to your next submission."
+      "Thank you for helping make discord better, we look forward to future suggestions!"
     ]
     c.sendMessage(message.join('\n'))
     switch (state[id].type) {
