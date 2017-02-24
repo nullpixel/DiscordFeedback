@@ -42,7 +42,7 @@ commands['shutdown'] = {
 }
 
 // Searchs for specfied search term through the UserVoice V1 API
-commands['uv-search'] = {
+commands['search'] = {
   adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
@@ -143,7 +143,7 @@ commands['uv-search'] = {
   }
 }
 
-commands['uv-comment'] = {
+commands['comment'] = {
   adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
@@ -321,19 +321,28 @@ commands['approve'] = {
     channel.fetchMessages().then(() => {
       var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
       if (!toEdit) {
-        message.reply('No report was found with this ID')
+        message.reply('No report was found with this ID').then(deletThis)
+        message.delete()
       } else {
         checker.getLevel(message.member, (r) => {
           if (state[content[0]].sudo && r !== 2) {
-            message.reply('You need to be an admin to approve this report.')
+            message.reply('You need to be an admin to approve this report.').then(deletThis)
+            message.delete()
+            return
+          }
+          if (state[content[0].user === message.author.user]) {
+            message.reply('You cannot approve your own submission.').then(deletThis)
+            message.delete()
             return
           }
           if (state[content[0]].approval.length === 3) {
-            message.reply('this report has already been closed.')
+            message.reply('this report has already been closed.').then(deletThis)
+            message.delete()
             return
           }
           state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
-          message.reply(`You've successfully submitted your approval for this report.`)
+          message.reply(`You've successfully submitted your approval for this report.`).then(deletThis)
+          message.delete()
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
           if (state[content[0]].approval.length === 3) {
             approve(client, content[0], uvClient, Config)
@@ -355,25 +364,29 @@ commands['deny'] = {
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     let content = suffix.split(' | ')
     if (content.length !== 2 || content[1].length === 0) {
-      message.reply('You need to supply a reason to deny this report.')
+      message.reply('You need to supply a reason to deny this report.').then(deletThis)
+      message.delete()
       return
     }
     let channel = client.Channels.find((c) => c.name === 'approval-queue')
     channel.fetchMessages().then(() => {
       var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
       if (!toEdit) {
-        message.reply('No report was found with this ID')
+        message.reply('No report was found with this ID').then(deletThis)
+        message.delete()
       } else {
         checker.getLevel(message.member, (r) => {
           if (state[content[0]].sudo && r !== 2) {
-            message.reply('You need to be an admin to deny this report.')
+            message.reply('You need to be an admin to deny this report.').then(deletThis)
+            message.delete()
+            return
           }
           if (state[content[0]].denial.length === 3) {
-            message.reply('this report has already been closed.')
+            message.reply('this report has already been closed.').then(deletThis)
             return
           }
           state[content[0]].denial.push(content[1])
-          message.reply(`You've successfully submitted your denial for this report.`)
+          message.reply(`You've successfully submitted your denial for this report.`).then(deletThis)
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' denied submission ' + content[0] + ' because `' + content[1] + '`'])
           if (state[content[0]].denial.length === 3) {
             deny(client, content[0])
@@ -412,7 +425,8 @@ commands['submit'] = {
           desc: description,
           type: 'newCard'
         }
-        message.channel.sendMessage(['You successfully submitted feedback!\nWe\'ve send it to the custodians for review, thanks!'])
+        message.channel.sendMessage(['You successfully submitted feedback!\nWe\'ve send it to the custodians for review, thanks!']).then(deletThis)
+        message.delete()
         message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['---------------------------------------------\n' + '**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
@@ -578,6 +592,10 @@ function getEmail(uvClient, guid) {
       console.error(response)
     })
   })
+}
+
+function deletThis (message) {
+  setTimeout(() => message.delete(), 1250)
 }
 
 // Logs into the V1 UserVoice API

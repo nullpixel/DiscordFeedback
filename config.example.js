@@ -16,10 +16,6 @@ let Config = {
     forumId: '575944', // ID of the suggestions forum
     forumName: 'test', // URL name of suggestions forum
     email: 'feedbackbot@noreply.discordapp.com', // email you want the bot using for when no email can be found.
-    trusted: true, // Is the key trusted by UserVoice?
-    tokenRequestUrl: 'http://bing.com', // UserVoice API request token URL
-    tokenAccessUrl: 'http://google.com', // UserVoice API access token URL,
-    OauthAuthUrl: 'http://yahoo.com' // UserVoice API OAuth redirect URL
   }
 }
 
