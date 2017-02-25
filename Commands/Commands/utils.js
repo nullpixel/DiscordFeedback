@@ -1,31 +1,14 @@
 var commands = []
 var state = {}
 var checker = require('../../Utils/access_checker')
+var config = require('../../config.js')
 
 // Replies Pong! to ping command
 commands.ping = {
-  adminOnly: false,
+  adminOnly: true,
   modOnly: false,
   fn: function (client, message) {
     message.reply('Pong!')
-  }
-}
-
-// Repeats message said by admin but no one else
-commands['admin-only'] = {
-  adminOnly: true,
-  modOnly: false,
-  fn: function (client, message, suffix) {
-    message.channel.sendMessage(suffix)
-  }
-}
-
-// Repeats message said by mod but no one else
-commands['mod-only'] = {
-  adminOnly: false,
-  modOnly: true,
-  fn: function (client, message, suffix) {
-    message.channel.sendMessage(suffix)
   }
 }
 
@@ -190,11 +173,11 @@ commands['comment'] = {
                 console.error(error)
               })
             }).catch(function (response) {
-              if (response.statusCode === '401') {
+              if (response.statusCode === 401) {
                 message.reply('There was an error processing that command, the admins have been notified.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
-              } else if (response.statusCode === '404') {
+              } else if (response.statusCode === 404) {
                 message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
@@ -247,7 +230,7 @@ commands['comment'] = {
                 message.reply('There was an error processing that commend, the admins have been notified.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
-              } else if (response.statusCode === '404') {
+              } else if (response.statusCode === 404) {
                 message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
@@ -291,6 +274,8 @@ commands['duplicate'] = {
           let code = uuid.v4().split('-')[0]
           state[code] = {
             denial: [],
+            approvedUsers: [],
+            deniedUsers: [],
             approval: [],
             user: message.author.id,
             type: 'dupe',
@@ -317,35 +302,49 @@ commands['approve'] = {
         message.reply('No report was found with this ID').then(deleteThis)
         message.delete()
       } else {
+        if (state[content[0]].approvedUsers.indexOf(message.author.id) > -1) {
+          message.reply('you already approved this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+            message.delete()
+            deleteThis(msg)
+          })
+          return
+        }
         checker.getLevel(message.member, (r) => {
           if (state[content[0]].sudo && r !== 2) {
-            message.reply('You need to be an admin to approve this report.').then(delay(config.discord.delayTime)).then((msg) => {
+            message.reply('You need to be an admin to approve this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
               message.delete()
               deleteThis(msg)
             })
             return
           }
           if (state[content[0].user === message.author.user]) {
-            message.reply('You cannot approve your own submission.').then(delay(config.discord.delayTime)).then((msg) => {
+            message.reply('You cannot approve your own submission.').then(delay(config.timeouts.messageDelete)).then((msg) => {
               message.delete()
               deleteThis(msg)
             })
             return
           }
-          if (state[content[0]].approval.length === 3) {
-            message.reply('This report has already been closed.').then(delay(config.discord.delayTime)).then((msg) => {
+          if (state[content[0]].approval.length === config.discord.approveThreshold) {
+            message.reply('This report has already been closed.').then(delay(config.timeouts.messageDelete)).then((msg) => {
               message.delete()
               deleteThis(msg)
             })
             return
           }
           state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
-          message.reply(`You've successfully submitted your approval for this report.`).then(delay(config.discord.delayTime)).then((msg) => {
+          message.reply(`You've successfully submitted your approval for this report.`).then(delay(config.timeouts.messageDelete)).then((msg) => {
             message.delete()
             deleteThis(msg)
           })
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' approved submission ' + content[0]])
-          if (state[content[0]].approval.length === 3) {
+          if (state[content[0]].sudo) {
+            approve(client, content[0], uvClient, Config)
+            setTimeout(() => {
+              toEdit.delete()
+            }, 2500)
+            return
+          }
+          if (state[content[0]].approval.length === config.discord.approveThreshold) {
             approve(client, content[0], uvClient, Config)
             setTimeout(() => {
               toEdit.delete()
@@ -365,7 +364,14 @@ commands['deny'] = {
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
     let content = suffix.split(' | ')
     if (content.length !== 2 || content[1].length === 0) {
-      message.reply('You need to supply a reason to deny this report.').then(delay(config.discord.delayTime)).then((msg) => {
+      message.reply('You need to supply a reason to deny this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+        message.delete()
+        deleteThis(msg)
+      })
+      return
+    }
+    if (state[content[0]].deniedUsers.indexOf(message.author.id) > -1) {
+      message.reply('you already denied this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
         message.delete()
         deleteThis(msg)
       })
@@ -375,33 +381,40 @@ commands['deny'] = {
     channel.fetchMessages().then(() => {
       var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
       if (!toEdit) {
-        message.reply('No report was found with this ID').then(delay(config.discord.delayTime)).then((msg) => {
+        message.reply('No report was found with this ID').then(delay(config.timeouts.messageDelete)).then((msg) => {
           message.delete()
           deleteThis(msg)
         })
       } else {
         checker.getLevel(message.member, (r) => {
           if (state[content[0]].sudo && r !== 2) {
-            message.reply('You need to be an admin to deny this report.').then(delay(config.discord.delayTime)).then((msg) => {
+            message.reply('You need to be an admin to deny this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
               message.delete()
               deleteThis(msg)
             })
             return
           }
-          if (state[content[0]].denial.length === 3) {
-            message.reply('this report has already been closed.').then(delay(config.discord.delayTime)).then((msg) => {
+          if (state[content[0]].denial.length === config.discord.denyThreshold) {
+            message.reply('this report has already been closed.').then(delay(config.timeouts.messageDelete)).then((msg) => {
               message.delete()
               deleteThis(msg)
             })
             return
           }
           state[content[0]].denial.push(content[1])
-          message.reply(`You've successfully submitted your denial for this report.`).then(delay(config.discord.delayTime)).then((msg) => {
+          message.reply(`You've successfully submitted your denial for this report.`).then(delay(config.timeouts.messageDelete)).then((msg) => {
             message.delete()
             deleteThis(msg)
           })
           message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' denied submission ' + content[0] + ' because `' + content[1] + '`'])
-          if (state[content[0]].denial.length === 3) {
+          if (state[content[0]].sudo) {
+            deny(client, content[0])
+            setTimeout(() => {
+              toEdit.delete()
+            }, 2500)
+            return
+          }
+          if (state[content[0]].denial.length === config.discord.denyThreshold) {
             deny(client, content[0])
             setTimeout(() => {
               toEdit.delete()
@@ -433,12 +446,14 @@ commands['submit'] = {
           user: message.author.id,
           denial: [],
           approval: [],
+          approvedUsers: [],
+          deniedUsers: [],
           email: user.users[0].email,
           title: title,
           desc: description,
           type: 'newCard'
         }
-        message.channel.sendMessage(['Thank you for your feedback!\nWe\'ve send it to the custodians for review!']).then(delay(config.discord.delayTime)).then((msg) => {
+        message.channel.sendMessage(['Thank you for your feedback!\nWe\'ve send it to the custodians for review!']).then(delay(config.timeouts.messageDelete)).then((msg) => {
           message.delete()
           deleteThis(msg)
         })
@@ -491,7 +506,7 @@ commands['uv'] = {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
                   console.error('UserVoice returned a 401 error:')
                   console.error(response)
-                } else if (response.statusCode === '404') {
+                } else if (response.statusCode === 404) {
                   message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
@@ -544,7 +559,7 @@ commands['uv'] = {
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
                   console.error('UserVoice returned a 401 error:')
                   console.error(response)
-                } else if (response.statusCode === '404') {
+                } else if (response.statusCode === 404) {
                   message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.')
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                   message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
@@ -579,7 +594,7 @@ function wait(bot, msg) {
       var time = setTimeout(() => {
         resolve(false)
         bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
-      }, 7500) // We won't wait forever for the person to anwser
+      }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser
       if (c.message.channel.id !== msg.channel.id) return
       if (c.message.author.id !== msg.author.id) return
       if (c.message.content.toLowerCase() !== 'yes' && c.message.content.toLowerCase() !== 'no') return
@@ -594,8 +609,8 @@ function wait(bot, msg) {
 
 function delay(delayMS) {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(arg), delayMS);
-  });
+    setTimeout(() => resolve(), delayMS)
+  })
 }
 
 function getEmail(uvClient, guid) {
