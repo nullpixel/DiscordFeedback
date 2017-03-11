@@ -44,3 +44,9 @@ example.*.json
 
 # JSON file for temp js pastes
 test.js
+
+# WebStorm stuff
+.idea
+
+# Channel config
+channels.js

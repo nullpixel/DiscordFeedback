@@ -432,6 +432,9 @@ commands['submit'] = {
   adminOnly: false,
   modOnly: false,
   fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    let channels = require('../../channels')
+    let IDs = Object.getOwnPropertyNames(channels)
+    if (IDs.indexOf(message.channel.id) === -1) return
     let content = suffix.split(' | ')
     if (content.length !== 2) {
       message.reply('This command only takes 2 arguments')
@@ -447,6 +450,7 @@ commands['submit'] = {
           denial: [],
           approval: [],
           approvedUsers: [],
+          category: channels[message.channel.id],
           deniedUsers: [],
           email: user.users[0].email,
           title: title,
@@ -457,7 +461,7 @@ commands['submit'] = {
           message.delete()
           deleteThis(msg)
         })
-        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
+        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n <#${message.channel.id}>**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
@@ -674,7 +678,7 @@ function createComment(Config, uvClient, message, suggestionID, email, comment) 
   })
 }
 
-function submit(user, title, description, uvClient, Config) {
+function submit(user, title, description, cat, uvClient, Config) {
   return new Promise((resolve, reject) => {
     uvClient.loginAs(user).then(function (v) {
       var uv = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'].toString()
@@ -682,7 +686,8 @@ function submit(user, title, description, uvClient, Config) {
           suggestion: {
             title: title,
             text: description,
-            votes: 1
+            votes: 1,
+            category_id: cat
           }
         })
         .then(resolve)
@@ -710,7 +715,7 @@ function approve(client, id, UV, config) {
       case 'newCard':
         {
           let data = state[id]
-          submit(data.email, data.title, data.desc, UV, config).catch(console.error)
+          submit(data.email, data.title, data.desc, data.category, UV, config).catch(console.error)
           break
         }
       default:
