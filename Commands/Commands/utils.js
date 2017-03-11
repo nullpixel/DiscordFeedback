@@ -461,7 +461,7 @@ commands['submit'] = {
           message.delete()
           deleteThis(msg)
         })
-        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n <#${message.channel.id}>**${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
+        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n <#${message.channel.id}>: **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
