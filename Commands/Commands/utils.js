@@ -445,6 +445,11 @@ commands['submit'] = {
       getEmail(uvClient, message.author.id).then(function (user) {
         let uuid = require('uuid')
         let code = uuid.v4().split('-')[0]
+        let template = `---------------------------------------------\n <#${message.channel.id}>: **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`
+        if (template.length > 2000) {
+          message.reply("the resulting message will be too long for me to process, can you please shorten it?")
+          return
+        }
         state[code] = {
           user: message.author.id,
           denial: [],
@@ -461,7 +466,7 @@ commands['submit'] = {
           message.delete()
           deleteThis(msg)
         })
-        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(`---------------------------------------------\n <#${message.channel.id}>: **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`)
+        message.guild.channels.find(c => c.name === 'approval-queue').sendMessage(template)
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' submitted new feedback: (' + code + ' **' + title + '**)'])
       })
     }
