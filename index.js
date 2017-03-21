@@ -73,6 +73,9 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
 
 // Gateway connection event
 bot.Dispatcher.on(Events.GATEWAY_READY, () => {
+  setInterval(() => {
+    bot.Users.fetchMembers() // Hacky way to cache offline users, #blamelazyloading
+  }, 600000)
   // Log to console that the bot is logged in
   console.log('Feedback bot is ready!')
   // Set current game
