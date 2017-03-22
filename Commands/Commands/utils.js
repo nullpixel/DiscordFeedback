@@ -187,6 +187,20 @@ commands['duplicate'] = {
         let content = suffix.split(' | ')
         if (content.length === 2) {
             if (content[1] !== null) {
+                if (content[0] === content[1]) {
+                    message.reply("You cannot mark the same report as a duplicate.").then(delay(config.timeouts.messageDelete)).then((msg) => {
+                        message.delete()
+                        deleteThis(msg)
+                    })
+                    return
+                } 
+                if (content[0].indexOf('http') === -1 || content[1].indexOf('http') === -1) {
+                    message.reply("You need to specify a report **URL**, not an ID.").then(delay(config.timeouts.messageDelete)).then((msg) => {
+                        message.delete()
+                        deleteThis(msg)
+                    })
+                    return
+                }
                 message.reply(`You are about to mark ${content[0]} as a duplicate of ${content[1]}, are you sure this is correct? (yes/no)`)
                 wait(client, message).then((response) => {
                     if (response === false) {
@@ -243,8 +257,8 @@ commands['approve'] = {
                 })
                 return
             } else {
-                if (state[content[0]].approvedUsers.indexOf(message.author.id) > -1) {
-                    message.reply('You\'ve already approved this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                if (state[content[0]].deniedUsers.indexOf(message.author.id) > -1 || state[content[0]].approvedUsers.indexOf(message.author.id) > -1) {
+                    message.reply("You've already given your input on this feedback.").then(delay(config.timeouts.messageDelete)).then((msg) => {
                         message.delete()
                         deleteThis(msg)
                     })
@@ -258,7 +272,7 @@ commands['approve'] = {
                         })
                         return
                     }
-                    if (state[content[0].user === message.author.user]) {
+                    if (state[content[0]].user === message.author.user) {
                         message.reply('You cannot approve your own submission.').then(delay(config.timeouts.messageDelete)).then((msg) => {
                             message.delete()
                             deleteThis(msg)
@@ -273,6 +287,7 @@ commands['approve'] = {
                         return
                     }
                     state[content[0]].approval.push((content[1]) ? content[1] : '*No comment*')
+                    state[content[0]].approvedUsers.push(message.author.id);
                     message.reply(`You've successfully submitted your approval for this report.`).then(delay(config.timeouts.messageDelete)).then((msg) => {
                         message.delete()
                         deleteThis(msg)
@@ -304,6 +319,7 @@ commands['deny'] = {
     modOnly: true,
     fn: function (client, message, suffix, UserVoice, uvClient, Config) {
         let content = suffix.split(' | ')
+        let channel = client.Channels.find((c) => c.name === 'approval-queue')
         if (content.length !== 2 || content[1].length === 0) {
             message.reply('You need to supply a reason to deny this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
                 message.delete()
@@ -311,14 +327,6 @@ commands['deny'] = {
             })
             return
         }
-        if (state[content[0]].deniedUsers.indexOf(message.author.id) > -1) {
-            message.reply('You\'ve already denied this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                message.delete()
-                deleteThis(msg)
-            })
-            return
-        }
-        let channel = client.Channels.find((c) => c.name === 'approval-queue')
         channel.fetchMessages().then(() => {
             var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
             if (!toEdit) {
@@ -327,6 +335,13 @@ commands['deny'] = {
                     deleteThis(msg)
                 })
             } else {
+                if (state[content[0]].deniedUsers.indexOf(message.author.id) > -1 || state[content[0]].approvedUsers.indexOf(message.author.id) > -1) {
+                    message.reply("You've already given your input on this feedback.").then(delay(config.timeouts.messageDelete)).then((msg) => {
+                        message.delete()
+                        deleteThis(msg)
+                    })
+                    return
+                }
                 checker.getLevel(message.member, (r) => {
                     if (state[content[0]].sudo && r !== 2) {
                         message.reply('You need to be an admin to deny this report.').then(delay(config.timeouts.messageDelete)).then((msg) => {
@@ -343,6 +358,7 @@ commands['deny'] = {
                         return
                     }
                     state[content[0]].denial.push(content[1])
+                    state[content[0]].deniedUsers.push(message.author.id);
                     message.reply(`You've successfully submitted your denial for this report.`).then(delay(config.timeouts.messageDelete)).then((msg) => {
                         message.delete()
                         deleteThis(msg)
@@ -648,7 +664,7 @@ function approve(client, id, UV, config) {
         let message = [
             'Hello there!',
             `Good news! Your submission with ID ${id} has been approved!`,
-            "Thank you for helping make discord better, we look forward to future suggestions!"
+            "Thank you for helping make Discord better, we look forward to future suggestions!"
         ]
         c.sendMessage(message.join('\n'))
         switch (state[id].type) {
