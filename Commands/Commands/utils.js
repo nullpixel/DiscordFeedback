@@ -570,9 +570,12 @@ function wait(bot, msg) {
 }
 
 function delay(delayMS) {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(), delayMS)
-    })
+    // thanks @Tiemen#0107 ily bb
+    return function(arg) {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(arg), delayMS);
+        });
+    }
 }
 
 function getEmail(uvClient, guid, message) {
@@ -596,7 +599,7 @@ function getEmail(uvClient, guid, message) {
 }
 
 function deleteThis(message) {
-    setTimeout(() => message.delete(), 1250)
+    setTimeout(() => message.delete(), config.timeouts.messageDelete)
 }
 
 // Logs into the V1 UserVoice API
