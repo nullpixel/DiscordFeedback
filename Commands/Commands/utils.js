@@ -272,7 +272,7 @@ commands['approve'] = {
                         })
                         return
                     }
-                    if (state[content[0]].user === message.author.user) {
+                    if (state[content[0]].user === message.author.id) {
                         message.reply('You cannot approve your own submission.').then(delay(config.timeouts.messageDelete)).then((msg) => {
                             message.delete()
                             deleteThis(msg)
