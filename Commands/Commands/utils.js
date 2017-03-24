@@ -3,6 +3,13 @@ var state = {}
 var checker = require('../../Utils/access_checker')
 var config = require('../../config.js')
 
+try {
+  state = JSON.parse(require('fs').readFileSync('./dump.json', 'utf8'))
+  console.log('Queue restored!')
+} catch (e) {
+  console.log('Failed to restore queue! ' + e.message)
+}
+
 // Replies Pong! to ping command
 commands.ping = {
     adminOnly: true,
@@ -732,3 +739,18 @@ function vote(message, uvClient, Config, email, suggestionID, vote) {
         })
     })
 }
+
+function saveTheWorld() {
+  console.log('About to exit! Attempting to dump current report memory to file...')
+  try {
+    require('fs').writeFileSync('./dump.json', JSON.stringify(state))
+    console.log('Queue saved.')
+  } catch (e) {
+    console.log("Error when writing json file! QUEUE HAS NOT BEEN SAVED!")
+  }
+  process.exit()
+}
+
+process.on('exit', () => {
+  saveTheWorld()
+})
