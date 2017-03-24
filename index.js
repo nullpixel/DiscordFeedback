@@ -21,9 +21,11 @@ var v2Client = new UserVoice.ClientV2({
 })
 /* eslint-enable no-unused-vars */
 
-// UserVoice API V1 Variables
-// All of the Variables are trim()'d because the V1 client fails to work otherwise
-// (AKA they don't call trim within the library to keep whitespace outside of the input)
+/*
+ UserVoice API V1 Variables
+ All of the Variables are trim()'d because the V1 client fails to work otherwise
+ (AKA they don't call trim within the library to keep whitespace outside of the input)
+ */
 var uvClient = new UserVoice.Client({
   subdomain: Config.uservoice.subdomain.trim(),
   domain: Config.uservoice.domain.trim(),
@@ -33,8 +35,9 @@ var uvClient = new UserVoice.Client({
 
 // This is what allows the bot to repsond to commands
 bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
+  if (c.message.isPrivate === true) return
   // Checks if the message has the specified prefix
-  if (c.message.content.indexOf(Config.discord.prefix) === 0 || c.message.content.indexOf(bot.User.mention, ' ') === 0) {
+  if (c.message.content.indexOf(Config.discord.prefix) === 0) {
     var cmd = c.message.content.substr(Config.discord.prefix.length).split(' ')[0].toLowerCase()
     var suffix
     suffix = c.message.content.substr(Config.discord.prefix.length).split(' ')
@@ -61,7 +64,7 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
           // reply that the command failed to process.
         } catch (e) {
           console.error(e)
-          msg.reply('an error occured while proccessing this command, the admins have been alerted, please try again later')
+          msg.reply('an error occurred while processing this command, the admins have been alerted, please try again later')
         }
       })
       // If the command a user specified doesn't exist, reply no such command.
@@ -78,15 +81,17 @@ bot.Dispatcher.on(Events.GATEWAY_READY, () => {
   }, 600000)
   // Log to console that the bot is logged in
   console.log('Feedback bot is ready!')
-  // Set current game
-  // bot.User.setGame('becoming sentiant')
-  // // Find the specified guild name in the list of connected guilds
-  // var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
-  // // Find the specified text channel in the guild specified above.
-  // var channel = guild.textChannels.find(c => c.name === 'bot-spam')
+  /*
+   Set current game
+   bot.User.setGame('becoming sentiant')
+   // Find the specified guild name in the list of connected guilds
+   var guild = bot.Guilds.find(g => g.name === 'Discord Feedback Testing')
+   // Find the specified text channel in the guild specified above.
+   var channel = guild.textChannels.find(c => c.name === 'bot-spam')
 
-  // // In the specified guild & channel, send to a "I'm online" msg
-  // channel.sendMessage('Bot is Online!')
+   // In the specified guild & channel, send to a "I'm online" msg
+   channel.sendMessage('Bot is Online!')
+   */
 })
 
 // Log to console when the bot loses conntection with the delay till reconnect

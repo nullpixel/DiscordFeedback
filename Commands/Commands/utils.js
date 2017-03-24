@@ -18,7 +18,6 @@ commands['shutdown'] = {
     modOnly: false,
     fn: function (client, message, suffix) {
         message.reply('Okay, shutting down.')
-
         console.log('I was shutdown! I would give a talking to', message.author.username, ', I think they were the one who shut me down.')
         client.disconnect()
     }
@@ -165,7 +164,6 @@ commands['comment'] = {
                 }).catch(function (error) {
                     console.error(error)
                 })
-                var emailDefault = Config.uservoice.email.trim()
             } else {
                 message.reply('You need to provide the message to be added by the ticket, separated by a pipe |').then(delay(config.timeouts.messageDelete)).then((msg) => {
                   message.delete()
@@ -204,7 +202,7 @@ commands['duplicate'] = {
                 message.reply(`You are about to mark ${content[0]} as a duplicate of ${content[1]}, are you sure this is correct? (yes/no)`)
                 wait(client, message).then((response) => {
                     if (response === false) {
-                        message.reply('You took too long to anwser, the operation has been cancelled.')
+                        message.reply('You took too long to answer, the operation has been cancelled.')
                     } else if (response === 'no') {
                         message.reply('Thanks for reconsidering, the operation has been cancelled.')
                     } else if (response === 'yes') {
@@ -247,7 +245,7 @@ commands['approve'] = {
     modOnly: true,
     fn: function (client, message, suffix, UserVoice, uvClient, Config) {
         let content = suffix.split(' | ')
-        let channel = client.Channels.find((c) => c.name === 'approval-queue')
+        let channel = (message.channel.id === '294548647109066752') ? client.Channels.find((c) => c.name === 'admin-queue') : client.Channels.find((c) => c.name === 'approval-queue')
         channel.fetchMessages().then(() => {
             var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
             if (!toEdit) {
