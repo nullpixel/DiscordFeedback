@@ -104,9 +104,12 @@ commands['comment'] = {
             if (suffix.split(' ').length >= 3) {
                 var comment = suffix.split(' ').slice(1).join(' ')
                 var suggestionID = suffix.split(' ')[0]
+                if (suggestionID.includes('feedback.discordapp')) {
                 getEmail(uvClient, message.author.id, message).then(function (email) {
                     if (email.users[0].email.includes('@')) {
-                        createComment(Config, uvClient, message, suggestionID, email.users[0].email, comment).then(function (commentResponse) {
+                      if (suggestionID.includes('feedback.discordapp')) {
+                        var suggestID = suggestionID.match(suggestions\/(\d+))
+                        createComment(Config, uvClient, message, suggestID, email.users[0].email, comment).then(function (commentResponse) {
                             // sends comment and url to suggestion to #bot-log for reasons
                             message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + commentResponse.comment.suggestion.url])
                             message.channel.sendMessage(['Here is your sparkling new comment! ' + commentResponse.comment.suggestion.url], false, {
@@ -167,6 +170,69 @@ commands['comment'] = {
                             }
                             console.error(response)
                         })
+                      } else {
+                            createComment(Config, uvClient, message, suggestionID, email.users[0].email, comment).then(function (commentResponse) {
+                            // sends comment and url to suggestion to #bot-log for reasons
+                            message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + commentResponse.comment.suggestion.url])
+                            message.channel.sendMessage(['Here is your sparkling new comment! ' + commentResponse.comment.suggestion.url], false, {
+                                title: commentResponse.comment.suggestion.title,
+                                url: commentResponse.comment.suggestion.url,
+                                description: commentResponse.comment.text,
+                                color: 0x3498db,
+                                author: {
+                                    name: commentResponse.comment.creator.name,
+                                    url: commentResponse.comment.creator.url,
+                                    icon_url: commentResponse.comment.creator.avatar_url
+                                },
+                                fields: [{
+                                    name: 'Comment State',
+                                    value: commentResponse.comment.state
+                                }, {
+                                    name: 'Comment Created',
+                                    value: new Date(commentResponse.comment.created_at).toUTCString()
+                                }, {
+                                    name: 'Comment Last Updated',
+                                    value: new Date(commentResponse.comment.updated_at).toUTCString()
+                                }, {
+                                    name: 'Votes For Suggestion',
+                                    value: commentResponse.comment.suggestion.vote_count
+                                }, {
+                                    name: 'Suggestion Created',
+                                    value: new Date(commentResponse.comment.suggestion.created_at).toUTCString()
+                                }, {
+                                    name: 'Suggestion Last updated',
+                                    value: new Date(commentResponse.comment.suggestion.updated_at).toUTCString()
+                                }]
+                            }).catch(function (error) {
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
+                                console.error(error)
+                            })
+                        }).catch(function (response) {
+                            if (response.statusCode === 401) {
+                                message.reply('There was an error processing that command, the admins have been notified.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                                  message.delete()
+                                  deleteThis(msg)
+                                })
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
+                            } else if (response.statusCode === 404) {
+                                message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                                  message.delete()
+                                  deleteThis(msg)
+                                })
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                            } else {
+                                message.reply('There was an error processing that command, the admins have been notified.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                                  message.delete()
+                                  deleteThis(msg)
+                                })
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
+                                message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
+                            }
+                            console.error(response)
+                        })
+                      }
                     }
                 }).catch(function (error) {
                     console.error(error)
