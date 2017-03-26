@@ -30,6 +30,23 @@ commands['shutdown'] = {
     }
 }
 
+commands.restart = {
+  adminOnly: true,
+  modOnly: false,
+  fn: function (client, message) {
+    const spawn = require('child_process').spawn
+    message.reply('performing a restart o7').then(() => {
+      require('fs').writeFileSync('./dump.json', JSON.stringify(state))
+      const child = spawn('node', ['index.js'], {
+        detached: true,
+        stdio: 'ignore'
+      })
+      child.unref()
+      process.exit()
+    })
+  }
+}
+
 // Searchs for specfied search term through the UserVoice V1 API
 commands['search'] = {
     adminOnly: false,
