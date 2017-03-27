@@ -125,7 +125,7 @@ commands['comment'] = {
                 getEmail(uvClient, message.author.id, message).then(function (email) {
                     if (email.users[0].email.includes('@')) {
                       if (suggestionID.includes('feedback.discordapp')) {
-                        var suggestID = suggestionID.match(suggestions\/(\d+))
+                        var suggestID = suggestionID.match(/suggestions\/(\d+)/)
                         createComment(Config, uvClient, message, suggestID, email.users[0].email, comment).then(function (commentResponse) {
                             // sends comment and url to suggestion to #bot-log for reasons
                             message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' commented ' + '`` ' + comment + ' `` on ' + commentResponse.comment.suggestion.url])
