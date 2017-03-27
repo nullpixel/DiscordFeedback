@@ -4,17 +4,17 @@ var checker = require('../../Utils/access_checker')
 var config = require('../../config.js')
 
 try {
-  state = JSON.parse(require('fs').readFileSync('./dump.json', 'utf8'))
-  console.log('Queue restored!')
+    state = JSON.parse(require('fs').readFileSync('./dump.json', 'utf8'))
+    console.log('Queue restored!')
 } catch (e) {
-  console.log('Failed to restore queue! ' + e.message)
+    console.log('Failed to restore queue! ' + e.message)
 }
 
 // Replies Pong! to ping command
 commands.ping = {
     adminOnly: true,
     modOnly: false,
-    fn: function (client, message) {
+    fn: function(client, message) {
         message.reply('Pong!')
     }
 }
@@ -23,7 +23,7 @@ commands.ping = {
 commands['shutdown'] = {
     adminOnly: true,
     modOnly: false,
-    fn: function (client, message, suffix) {
+    fn: function(client, message, suffix) {
         message.reply('Okay, shutting down.')
         console.log('I was shutdown! I would give a talking to', message.author.username, ', I think they were the one who shut me down.')
         client.disconnect()
@@ -51,64 +51,64 @@ commands.restart = {
 commands['search'] = {
     adminOnly: false,
     modOnly: false,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         // Is the full UserVoice search URL
         var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '?query=' + encodeURIComponent(suffix.trim())].toString()
-        // sends url & search to #bot-log for reasons
+            // sends url & search to #bot-log for reasons
         message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' searched for ``' + suffix + '``:\n' + userVoiceURL])
-        // sends typing to channel before saying anything
+            // sends typing to channel before saying anything
         message.channel.sendTyping()
-        // checks if the suffix is blank, if so ask for a search query
+            // checks if the suffix is blank, if so ask for a search query
         if (suffix === '') {
             message.reply('You need to specify a search query.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                message.delete()
-                deleteThis(msg)
-            })
-            // If not call the search function to actually search via. UserVoice's API for the query.
-            // (UserVoice does the actual searching in their API and returns us the json results)
+                    message.delete()
+                    deleteThis(msg)
+                })
+                // If not call the search function to actually search via. UserVoice's API for the query.
+                // (UserVoice does the actual searching in their API and returns us the json results)
         } else {
             // call the search function with specfied variables, then resolves the Promise
-            search(Config, uvClient, suffix).then(function (search) {
+            search(Config, uvClient, suffix).then(function(search) {
                     // Checks if the total returned suggestions is 0, and sends a message to the channel
                     if (search.response_data.total_records === 0) {
                         message.reply(['There aren\'t any suggestions available with that keyword. This probably means that someone hasn\'t suggested that idea yet. (or maybe you made a typo) :wink: \nCheck out #bot-instructions for info on how to submit your idea.\n' + userVoiceURL]).then(delay(config.timeouts.messageDelete)).then((msg) => {
-                          message.delete()
-                          deleteThis(msg)
-                        })
-                        // If there is 1 or more suggestions returned send the user a PM with the results
+                                message.delete()
+                                deleteThis(msg)
+                            })
+                            // If there is 1 or more suggestions returned send the user a PM with the results
                     } else {
                         message.reply('I just DMed you with the results.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                          message.delete()
-                          deleteThis(msg)
+                            message.delete()
+                            deleteThis(msg)
                         })
-                        let top = search.suggestions.slice(0,5);
+                        let top = search.suggestions.slice(0, 5);
                         let list = top.map(suggest => `» [${suggest.title}](${suggest.url})`).join("\n");
-                        message.author.openDM().then(function (dm) {
+                        message.author.openDM().then(function(dm) {
                             dm.sendTyping()
                             dm.sendMessage("Here are the suggestions that you searched for:", false, {
-                                title: "Search: Top 5 results",
-                                description: `${list}\n\nYou can find a full list of suggestions [here](${userVoiceURL})`,
-                                color: 0x3498db
-                                // If the send embed message fail, log the error to console then send a shortened version to the chat
-                            }).catch(function (e) {
-                                console.error(e)
-                                message.channel.sendTyping()
-                                message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
-                            })
-                            // close the DM channel
+                                    title: "Search: Top 5 results",
+                                    description: `${list}\n\nYou can find a full list of suggestions [here](${userVoiceURL})`,
+                                    color: 0x3498db
+                                        // If the send embed message fail, log the error to console then send a shortened version to the chat
+                                }).catch(function(e) {
+                                    console.error(e)
+                                    message.channel.sendTyping()
+                                    message.channel.sendMessage(['There was an error:' + '\n```\n' + e + '\n```'])
+                                })
+                                // close the DM channel
                             dm.close()
                         })
                     }
                 })
                 // if it fails, log the error to console and report it failed to chat.
-                .catch(function (error) {
-                  console.error(error)
-                  message.channel.sendTyping()
-                  message.reply('An Error occured, I have notified the admins.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                    message.delete()
-                    deleteThis(msg)
+                .catch(function(error) {
+                    console.error(error)
+                    message.channel.sendTyping()
+                    message.reply('An Error occured, I have notified the admins.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                        message.delete()
+                        deleteThis(msg)
+                    })
                 })
-            })
         }
     }
 }
@@ -116,7 +116,7 @@ commands['search'] = {
 commands['comment'] = {
     adminOnly: false,
     modOnly: false,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         if (typeof Number(suffix.split(' ')[1]) === 'number') {
             if (suffix.split(' ').length >= 3) {
                 var comment = suffix.split(' ').slice(1).join(' ')
@@ -220,29 +220,29 @@ commands['comment'] = {
                                     name: 'Suggestion Last updated',
                                     value: new Date(commentResponse.comment.suggestion.updated_at).toUTCString()
                                 }]
-                            }).catch(function (error) {
+                            }).catch(function(error) {
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['There was an error sending the embed:\n```\n' + JSON.stringify(error, null, '\t') + '\n```'])
                                 console.error(error)
                             })
-                        }).catch(function (response) {
+                        }).catch(function(response) {
                             if (response.statusCode === 401) {
                                 message.reply('There was an error processing that command, the admins have been notified.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                                  message.delete()
-                                  deleteThis(msg)
+                                    message.delete()
+                                    deleteThis(msg)
                                 })
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(JSON.parse(response.data), null, '\t').replace('\'', '') + '\n```'])
                             } else if (response.statusCode === 404) {
                                 message.reply('That suggestion ID doesn\'t exist, please give a valid suggestionID.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                                  message.delete()
-                                  deleteThis(msg)
+                                    message.delete()
+                                    deleteThis(msg)
                                 })
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 404 error from UserVoice. Here\'s the data error:'])
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
                             } else {
                                 message.reply('There was an error processing that command, the admins have been notified.').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                                  message.delete()
-                                  deleteThis(msg)
+                                    message.delete()
+                                    deleteThis(msg)
                                 })
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a error from UserVoice. Here\'s the full error:'])
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(response, null, '\t').replace('\'', '') + '\n```'])
@@ -251,14 +251,14 @@ commands['comment'] = {
                         })
                       }
                     }
-                }).catch(function (error) {
+                }).catch(function(error) {
                     console.error(error)
                 })
             } else {
                 message.reply('You need to provide the message to be added by the ticket, separated by a pipe |').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                  message.delete()
-                  deleteThis(msg)
-              })
+                    message.delete()
+                    deleteThis(msg)
+                })
             }
         } else {
             message.reply('You need to include the ID for the suggestion you want to add a comment to, separated by a pipe |').then(delay(config.timeouts.messageDelete)).then((msg) => {
@@ -271,7 +271,14 @@ commands['comment'] = {
 commands['duplicate'] = {
     adminOnly: false,
     modOnly: true,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
+        if (message.guild.textChannels.find(c => c.name === 'approval-queue') === message.channel) {
+            message.reply("You cannot mark reports as a duplicate in the approval queue.").then(delay(config.timeouts.messageDelete)).then((msg) => {
+                message.delete()
+                deleteThis(msg)
+            })
+            return
+        }
         let content = suffix.split(' | ')
         if (content.length === 2) {
             if (content[1] !== null) {
@@ -281,7 +288,7 @@ commands['duplicate'] = {
                         deleteThis(msg)
                     })
                     return
-                } 
+                }
                 if (content[0].indexOf('http') === -1 || content[1].indexOf('http') === -1) {
                     message.reply("You need to specify a report **URL**, not an ID.").then(delay(config.timeouts.messageDelete)).then((msg) => {
                         message.delete()
@@ -289,14 +296,26 @@ commands['duplicate'] = {
                     })
                     return
                 }
-                message.reply(`You are about to mark ${content[0]} as a duplicate of ${content[1]}, are you sure this is correct? (yes/no)`)
+                message.reply(`You are about to mark ${content[0]} as a duplicate of ${content[1]}, are you sure this is correct? (yes/no)`).then(delay(config.timeouts.messageDelete)).then((msg) => {
+                    message.delete()
+                    deleteThis(msg)
+                })
                 wait(client, message).then((response) => {
                     if (response === false) {
-                        message.reply('You took too long to answer, the operation has been cancelled.')
+                        message.reply('You took too long to answer, the operation has been cancelled.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                            message.delete()
+                            deleteThis(msg)
+                        })
                     } else if (response === 'no') {
-                        message.reply('Thanks for reconsidering, the operation has been cancelled.')
+                        message.reply('Thanks for reconsidering, the operation has been cancelled.').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                            message.delete()
+                            deleteThis(msg)
+                        })
                     } else if (response === 'yes') {
-                        message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!')
+                        message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                            message.delete()
+                            deleteThis(msg)
+                        })
                         let uuid = require('uuid')
                         let code = uuid.v4().split('-')[0]
                         state[code] = {
@@ -314,11 +333,11 @@ commands['duplicate'] = {
                     }
                 })
             } else {
-              message.reply("You need to provide two URLs and separate them with a pipe |").then(delay(config.timeouts.messageDelete)).then((msg) => {
-                  message.delete()
-                  deleteThis(msg)
-              })
-              return
+                message.reply("You need to provide two URLs and separate them with a pipe |").then(delay(config.timeouts.messageDelete)).then((msg) => {
+                    message.delete()
+                    deleteThis(msg)
+                })
+                return
             }
         } else {
             message.reply("This command only takes two arguments. Please ensure you have specfied two urls, seperated by a pipe.").then(delay(config.timeouts.messageDelete)).then((msg) => {
@@ -333,15 +352,15 @@ commands['duplicate'] = {
 commands['approve'] = {
     adminOnly: false,
     modOnly: true,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         let content = suffix.split(' | ')
         let channel = (message.channel.id === '294548647109066752') ? client.Channels.find((c) => c.name === 'admin-queue') : client.Channels.find((c) => c.name === 'approval-queue')
         channel.fetchMessages().then(() => {
             var toEdit = channel.messages.find((c) => c.author.id === client.User.id && c.content.split('**ID**: ')[1] !== undefined && c.content.split('**ID**: ')[1].split('\n')[0] === content[0])
             if (!toEdit) {
                 message.reply('No report was found with this ID').then(delay(config.timeouts.messageDelete)).then((msg) => {
-                  message.delete()
-                  deleteThis(msg)
+                    message.delete()
+                    deleteThis(msg)
                 })
                 return
             } else {
@@ -405,7 +424,7 @@ commands['approve'] = {
 commands['deny'] = {
     adminOnly: false,
     modOnly: true,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         let content = suffix.split(' | ')
         let channel = client.Channels.find((c) => c.name === 'approval-queue')
         if (content.length !== 2 || content[1].length === 0) {
@@ -476,7 +495,7 @@ commands['deny'] = {
 commands['submit'] = {
     adminOnly: false,
     modOnly: false,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         let channels = require('../../channels')
         let IDs = Object.getOwnPropertyNames(channels)
         if (IDs.indexOf(message.channel.id) === -1) return
@@ -487,7 +506,7 @@ commands['submit'] = {
             let title = content[0]
             let description = content[1]
             message.channel.sendTyping()
-            getEmail(uvClient, message.author.id, message).then(function (user) {
+            getEmail(uvClient, message.author.id, message).then(function(user) {
                 let uuid = require('uuid')
                 let code = uuid.v4().split('-')[0]
                 let template = `---------------------------------------------\n <#${message.channel.id}>: **${message.author.username}#${message.author.discriminator}** submitted new feedback \n${title}\n${description}.\n\nThis needs to be approved: **ID**: ${code}`
@@ -521,14 +540,14 @@ commands['submit'] = {
 commands['uv'] = {
     adminOnly: false,
     modOnly: false,
-    fn: function (client, message, suffix, UserVoice, uvClient, Config) {
+    fn: function(client, message, suffix, UserVoice, uvClient, Config) {
         if (suffix.split(' ').length >= 3) {
             message.reply('This command only takes 1 suggestion ID as a argument')
         } else if (suffix.split(' ').length >= 2) {
-            getEmail(uvClient, message.author.id, message).then(function (email) {
+            getEmail(uvClient, message.author.id, message).then(function(email) {
                 if (suffix.split(' ')[0] === 'vote') {
                     vote(message, uvClient, Config, email.users[0].email, suffix.split(' ')[1], 1)
-                        .then(function (vote) {
+                        .then(function(vote) {
                             var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '/suggestions/' + suffix.split(' ')[1]].toString()
                             message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' voted on ' + userVoiceURL])
                             message.channel.sendMessage(['You successfully voted on ' + userVoiceURL], null, {
@@ -552,7 +571,7 @@ commands['uv'] = {
                                     value: new Date(vote.suggestion.updated_at).toUTCString()
                                 }]
                             })
-                        }).catch(function (response) {
+                        }).catch(function(response) {
                             if (response.statusCode === 401) {
                                 message.reply('There was an error processing that command, the admins have been notified.')
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
@@ -575,10 +594,10 @@ commands['uv'] = {
                         })
                 } else if (suffix.split(' ')[0] === 'unvote') {
                     vote(message, uvClient, Config, email.users[0].email, suffix.split(' ')[1], 0)
-                        .then(function (vote) {
+                        .then(function(vote) {
                             var userVoiceURL = ['https://' + Config.uservoice.subdomain.trim() + '.' + Config.uservoice.domain.trim() + '/forums/' + Config.uservoice.forumId.trim() + '-' + Config.uservoice.forumName.trim() + '/suggestions/' + suffix.split(' ')[1]].toString()
                             message.guild.textChannels.find(c => c.name === 'bot-log').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' removed their vote from ' + userVoiceURL])
-                            message.channel.sendMessage(['You successfully removed your vote from ' + userVoiceURL], null, {
+                            message.reply(['You successfully removed your vote from ' + userVoiceURL], null, {
                                 title: vote.suggestion.title,
                                 url: vote.suggestion.url,
                                 description: vote.suggestion.text,
@@ -598,14 +617,14 @@ commands['uv'] = {
                                     name: 'Suggestion Last updated',
                                     value: new Date(vote.suggestion.updated_at).toUTCString()
                                 }]
-                            }).catch(function (error) {
+                            }).catch(function(error) {
                                 message.reply('There was an error processing that command, the admins have been notified.')
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage([' there was an error sending the embed that ' + '**' + message.author.username + '#' + message.author.discriminator + '**' + ' should\'ve received.'])
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['```json\n' + JSON.stringify(error, null, '\t') + '\n```'])
                                 console.error('There was an error sending the message to Discord.')
                                 console.error(error)
                             })
-                        }).catch(function (response) {
+                        }).catch(function(response) {
                             if (response.statusCode === 401) {
                                 message.reply('There was an error processing that command, the admins have been notified.')
                                 message.guild.textChannels.find(c => c.name === 'bot-error').sendMessage(['**' + message.author.username + '#' + message.author.discriminator + '**' + ' has received a 401 error from UserVoice. Here\'s the data error:'])
@@ -642,9 +661,9 @@ function wait(bot, msg) {
     return new Promise((resolve, reject) => {
         bot.Dispatcher.on('MESSAGE_CREATE', function doStuff(c) {
             var time = setTimeout(() => {
-                resolve(false)
-                bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
-            }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser
+                    resolve(false)
+                    bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
+                }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser
             if (c.message.channel.id !== msg.channel.id) return
             if (c.message.author.id !== msg.author.id) return
             if (c.message.content.toLowerCase() !== 'yes' && c.message.content.toLowerCase() !== 'no') return
@@ -668,17 +687,17 @@ function delay(delayMS) {
 
 function getEmail(uvClient, guid, message) {
     return new Promise((resolve, reject) => {
-        uvClient.loginAsOwner().then(function (o) {
+        uvClient.loginAsOwner().then(function(o) {
             o.get('users/search.json', {
                     guid: guid
                 })
                 // Send the reply back to where this function is called so it can be processed.
                 .then(resolve)
                 .catch(reject)
-        }).catch(function (response) {
+        }).catch(function(response) {
             console.error(response)
-            // message can be null, allowing it to be used out of message context
-            // I am aware how this isn't how promises work, but for usability sake, this is what I'm doing ~ null
+                // message can be null, allowing it to be used out of message context
+                // I am aware how this isn't how promises work, but for usability sake, this is what I'm doing ~ null
             if (message !== null) {
                 if (response.statusCode === 401) message.reply(`In order to use commands you have to be logged into the feedback site. Just go to <https://feedback.discordapp.com> and click on the Sign In button.`);
             }
@@ -696,7 +715,7 @@ function search(Config, uvClient, query) {
     return new Promise((resolve, reject) => {
         // Convert the UserVoice API url to a string (Needed because of forumId)
         var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/search.json'].toString()
-        // Sends a get request to the URL with the parameters
+            // Sends a get request to the URL with the parameters
         uvClient.get(uV, {
                 query: query,
                 per_page: '5' // set to five results so no more appear in the suggestion array then that (even if there is more results)
@@ -711,10 +730,10 @@ function createComment(Config, uvClient, message, suggestionID, email, comment) 
     // return a Promise since uvClient.get() returns a Promise
     return new Promise((resolve, reject) => {
         uvClient.loginAs(email)
-            .then(function (t) {
+            .then(function(t) {
                 // Convert the UserVoice API url to a string (Needed because of forumId)
                 var uV = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions/' + suggestionID + '/comments.json'].toString()
-                // Sends a put request to the URL with the parameters, yes it needs to be like that, blame UserVoice for the stupidity of the parameters.
+                    // Sends a put request to the URL with the parameters, yes it needs to be like that, blame UserVoice for the stupidity of the parameters.
                 t.post(uV, {
                         comment: {
                             text: comment
@@ -724,7 +743,7 @@ function createComment(Config, uvClient, message, suggestionID, email, comment) 
                     .then(resolve)
                     .catch(reject)
             }) // catch any errors from uservoice loginAsOwner and spit them out to console
-            .catch(function (response) {
+            .catch(function(response) {
                 console.error(response)
             })
     })
@@ -732,7 +751,7 @@ function createComment(Config, uvClient, message, suggestionID, email, comment) 
 
 function submit(user, title, description, cat, uvClient, Config) {
     return new Promise((resolve, reject) => {
-        uvClient.loginAs(user).then(function (v) {
+        uvClient.loginAs(user).then(function(v) {
             var uv = ['forums/' + Config.uservoice.forumId.trim() + '/suggestions.json'].toString()
             v.post(uv, {
                     suggestion: {
@@ -744,7 +763,7 @@ function submit(user, title, description, cat, uvClient, Config) {
                 })
                 .then(resolve)
                 .catch(reject)
-        }).catch(function (response) {
+        }).catch(function(response) {
             console.error(response)
         })
     })
@@ -759,22 +778,22 @@ function approve(client, id, UV, config) {
         ]
         c.sendMessage(message.join('\n'))
         switch (state[id].type) {
-        case 'dupe':
-            {
-                deleteFromUV(state[id].remove, UV).catch(console.error)
-                break
-            }
-        case 'newCard':
-            {
-                let data = state[id]
-                submit(data.email, data.title, data.desc, data.category, UV, config).catch(console.error)
-                break
-            }
-        default:
-            {
-                console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
-                break
-            }
+            case 'dupe':
+                {
+                    deleteFromUV(state[id].remove, UV).catch(console.error)
+                    break
+                }
+            case 'newCard':
+                {
+                    let data = state[id]
+                    submit(data.email, data.title, data.desc, data.category, UV, config).catch(console.error)
+                    break
+                }
+            default:
+                {
+                    console.error(`Warning! No suitable action found for report type ${state[id].type}!`)
+                    break
+                }
         }
     })
 }
@@ -788,7 +807,7 @@ function deleteFromUV(toDelete, uvClient) {
         }
         let forumID = parts[1]
         let suggestionID = parts[2]
-        uvClient.loginAsOwner().then(function (v) {
+        uvClient.loginAsOwner().then(function(v) {
             var uv = `forums/${forumID}/suggestions/${suggestionID}.json`
             v.delete(uv)
                 .then(resolve)
@@ -810,28 +829,28 @@ function deny(client, id) {
 
 function vote(message, uvClient, Config, email, suggestionID, vote) {
     return new Promise((resolve, reject) => {
-        uvClient.loginAs(email).then(function (v) {
+        uvClient.loginAs(email).then(function(v) {
             var uv = ['forums/' + Config.uservoice.forumId + '/suggestions/' + suggestionID + '/votes.json'].toString()
             v.post(uv, {
                     to: vote
                 })
                 .then(resolve)
                 .catch(reject)
-        }).catch(function (response) {
+        }).catch(function(response) {
             console.error(response)
         })
     })
 }
 
 function saveTheWorld() {
-  console.log('About to exit! Attempting to dump current report memory to file...')
-  try {
-    require('fs').writeFileSync('./dump.json', JSON.stringify(state))
-    console.log('Queue saved.')
-  } catch (e) {
-    console.log("Error when writing json file! QUEUE HAS NOT BEEN SAVED!")
-  }
-  process.exit()
+    console.log('About to exit! Attempting to dump current report memory to file...')
+    try {
+        require('fs').writeFileSync('./dump.json', JSON.stringify(state))
+        console.log('Queue saved.')
+    } catch (e) {
+        console.log("Error when writing json file! QUEUE HAS NOT BEEN SAVED!")
+    }
+    process.exit()
 }
 
 process.on('exit', () => {
