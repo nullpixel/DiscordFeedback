@@ -2,6 +2,9 @@ var commands = []
 var state = {}
 var checker = require('../../Utils/access_checker')
 var config = require('../../config.js')
+var bugsnag = require("bugsnag")
+
+bugsnag.register(config.discord.bugsnag);
 
 try {
     state = JSON.parse(require('fs').readFileSync('./dump.json', 'utf8'))
@@ -247,7 +250,7 @@ commands['duplicate'] = {
                             deleteThis(msg)
                         })
                     } else if (response === 'yes') {
-                        message.reply('Thanks for your report! We\'ve asked the custodians to review your report, you should hear from us soon!').then(delay(config.timeouts.messageDelete)).then((msg) => {
+                        message.reply('Thanks for your report! We\'ve asked the admins to review your report, you should hear from us soon!').then(delay(config.timeouts.messageDelete)).then((msg) => {
                             message.delete()
                             deleteThis(msg)
                         })

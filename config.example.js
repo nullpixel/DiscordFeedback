@@ -3,6 +3,7 @@ let Config = {
     token: 'MTXQIAUk_oxWYymVxOGJTdgEEHZancmLvDsavtVmcYykatlA.zyvIxLvNpGGPAaAU_PQ.NvU', // (Not an actual token, don't worry) Enter a Discord bot token here.
     prefix: '!', // Bot prefix for all commands
     denyThreshold: 3,
+    bugsnag: 'wewladdy',
     approveThreshold: 3,
     messageCacheLimit: '1000', // Sets the maximum amount of messages in the cache this will help keep memory in check.
     Roles: { // Array of the different Roles

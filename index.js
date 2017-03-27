@@ -13,6 +13,10 @@ const bot = new Discordie({
   messageCacheLimit: Config.discord.messageCacheLimit
 })
 
+var bugsnag = require("bugsnag")
+
+bugsnag.register(Config.discord.bugsnag)
+
 /* eslint-disable no-unused-vars */
 // UserVoice API V2 Variables
 var v2Client = new UserVoice.ClientV2({
@@ -92,6 +96,12 @@ bot.Dispatcher.on(Events.GATEWAY_READY, () => {
    // In the specified guild & channel, send to a "I'm online" msg
    channel.sendMessage('Bot is Online!')
    */
+})
+
+process.on('unhandledRejection', (reason, p) => {
+  if (p !== null && reason !== null) {
+    bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth: 3})}: ${reason}`))
+  }
 })
 
 // Log to console when the bot loses conntection with the delay till reconnect
