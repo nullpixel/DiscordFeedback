@@ -187,7 +187,7 @@ commands.dupe = {
                   },
                   {
                     name: 'Target Card: Content',
-                    value: (data2.suggestion.text.length < 500) ? data2.suggestion.text : `Summary: ${data.suggestion.text.substring(0,491)}`,
+                    value: (data2.suggestion.text.length < 500) ? data2.suggestion.text : `Summary: ${data2.suggestion.text.substring(0,491)}`,
                     inline: false
                   },
                   {
